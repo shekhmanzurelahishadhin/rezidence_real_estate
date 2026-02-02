@@ -280,27 +280,6 @@ export default function BlogDetailPage() {
                 ))}
               </div>
             </div>
-
-            {/* Newsletter CTA */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
-              <h4 className="text-xl font-bold mb-3">Stay Updated</h4>
-              <p className="text-amber-100 text-sm mb-4">
-                Get weekly market insights and analysis delivered to your inbox.
-              </p>
-              <form className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white placeholder-amber-200 focus:outline-none focus:border-white"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-white text-amber-600 font-semibold py-2.5 rounded-lg hover:bg-gray-100 transition-colors duration-300"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
           </aside>
         </div>
       </div>
