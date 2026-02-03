@@ -6,14 +6,13 @@ import {
   MailIcon, 
   ChevronUpIcon, 
   PhoneIcon, 
-  MapPinIcon,
   FacebookIcon,
   TwitterIcon,
   InstagramIcon,
   LinkedinIcon,
-  ShieldCheckIcon,
-  TrendingUpIcon,
-  HomeIcon
+  HomeIcon,
+  SunIcon,
+  MoonIcon
 } from "@/assets/icons";
 
 const columns = [
@@ -53,6 +52,23 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Check system preference on mount
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,107 +92,169 @@ export default function Footer() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
-      {/* Back to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed right-8 z-50 transition-all duration-500 ${
-          showScrollTop 
-            ? "bottom-8 opacity-100 visible" 
-            : "-bottom-4 opacity-0 invisible"
-        }`}
-        aria-label="Scroll to top"
-      >
-        <div className="relative group">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-400/30 to-orange-500/30 rounded-full blur-lg group-hover:blur-xl transition-all duration-500" />
-          
-          {/* Main button */}
-          <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-500 group-hover:scale-110">
-            <div className="absolute inset-2 rounded-full border border-white/20" />
+      {/* Floating Buttons */}
+      <div className="floating-buttons-container">
+        {/* Dark/Light Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
+          aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          style={{
+            background: isDarkMode 
+              ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' 
+              : 'linear-gradient(135deg, #e8a838, #f97316)'
+          }}
+        >
+          <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {isDarkMode ? (
+            <SunIcon size={20} color="white" className="group-hover:rotate-180 transition-transform duration-500" />
+          ) : (
+            <MoonIcon size={20} color="white" className="group-hover:rotate-180 transition-transform duration-500" />
+          )}
+        </button>
+
+        {/* Back to Top Button */}
+        {showScrollTop && (
+          <button
+            onClick={scrollToTop}
+            className="relative w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group animate-bounceIn"
+            aria-label="Scroll to top"
+          >
+            <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <ChevronUpIcon 
-              size={22} 
+              size={20} 
               color="white" 
-              className="transform group-hover:-translate-y-1 transition-transform duration-300"
+              className="group-hover:-translate-y-0.5 transition-transform duration-300"
             />
-          </div>
-          
-          {/* Pulse animation */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 animate-ping opacity-20" />
-        </div>
-      </button>
+          </button>
+        )}
+      </div>
 
       {/* Main Footer */}
-      <footer className="relative overflow-hidden bg-gradient-to-b from-white via-gray-50 to-gray-100 pt-20 pb-12">
-        {/* Background elements */}
-        <div className="absolute top-1/4 left-10 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <footer className={`transition-all duration-500 ${
+        isDarkMode 
+          ? 'bg-gray-900 text-white' 
+          : 'bg-white text-gray-900'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-16 sm:pt-20 pb-12">
           {/* Top Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
             {/* Brand Column */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <HomeIcon size={24} color="white" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+                    <HomeIcon size={20} className="sm:w-6 sm:h-6" color="white" />
                   </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border-2 border-white" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border-2 border-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  <h2 className={`text-xl sm:text-2xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                     LuxeProperties
                   </h2>
-                  <p className="text-gray-500 text-sm">Premium Real Estate Solutions</p>
+                  <p className={`text-xs sm:text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    Premium Real Estate Solutions
+                  </p>
                 </div>
               </div>
 
-              <p className="text-gray-600 leading-relaxed">
+              <p className={`text-sm sm:text-base leading-relaxed ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 We connect discerning clients with exceptional properties. Experience the pinnacle of luxury real estate with our curated collection and personalized service.
               </p>
 
               {/* Newsletter */}
-              <div className="pt-4">
-                <p className="text-gray-900 font-semibold text-sm mb-3">Stay Updated</p>
-                <form onSubmit={handleSubscribe} className="flex gap-2">
+              <div className="pt-2 sm:pt-4">
+                <p className={`font-semibold text-sm mb-2 sm:mb-3 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Stay Updated
+                </p>
+                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all duration-300"
+                    className={`flex-1 border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-2 transition-all duration-300 placeholder-gray-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 border-gray-700 text-white focus:ring-amber-500/20' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:ring-amber-100'
+                    }`}
+                    required
                   />
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-4 py-2.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-sm"
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-4 py-2.5 rounded-lg transition-all duration-300 text-sm whitespace-nowrap shadow-md hover:shadow-lg"
                   >
                     Subscribe
                   </button>
                 </form>
                 {subscribed && (
-                  <p className="mt-2 text-sm text-green-600">Thank you for subscribing!</p>
+                  <p className={`mt-2 text-sm animate-fadeIn ${
+                    isDarkMode ? 'text-green-400' : 'text-green-600'
+                  }`}>
+                    Thank you for subscribing!
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Link Columns */}
             {columns.map((col) => (
-              <div key={col.title}>
-                <h3 className="text-gray-900 font-bold text-lg mb-6">
+              <div key={col.title} className="mt-4 sm:mt-0">
+                <h3 className={`font-bold text-base sm:text-lg mb-4 sm:mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
                   {col.title}
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-2 sm:space-y-3">
                   {col.links.map((link) => (
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-gray-600 hover:text-amber-600 transition-all duration-300 group/link flex items-center gap-2"
+                        className={`transition-all duration-300 group/link flex items-center gap-2 ${
+                          isDarkMode 
+                            ? 'text-gray-400 hover:text-amber-400' 
+                            : 'text-gray-600 hover:text-amber-600'
+                        }`}
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/link:bg-amber-400 group-hover/link:scale-125 transition-all duration-300" />
-                        {link.label}
-                        <span className="opacity-0 group-hover/link:opacity-100 group-hover/link:translate-x-1 transition-all duration-300">→</span>
+                        <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                          isDarkMode 
+                            ? 'bg-gray-700 group-hover/link:bg-amber-500' 
+                            : 'bg-gray-300 group-hover/link:bg-amber-500'
+                        } group-hover/link:scale-125`} />
+                        <span className="text-sm sm:text-base">{link.label}</span>
+                        <span className={`opacity-0 group-hover/link:opacity-100 group-hover/link:translate-x-1 transition-all duration-300 ${
+                          isDarkMode ? 'text-amber-400' : 'text-amber-600'
+                        }`}>
+                          →
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -186,48 +264,88 @@ export default function Footer() {
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-gray-200 pt-8">
+          <div className={`border-t pt-8 ${
+            isDarkMode ? 'border-gray-800' : 'border-gray-200'
+          }`}>
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-gray-600 text-sm">
+              <div className={`text-sm ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 © {new Date().getFullYear()} LuxeProperties. All rights reserved.
               </div>
 
               {/* Social Links */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 {[
-                  { icon: <FacebookIcon size={20} />, label: "Facebook" },
-                  { icon: <TwitterIcon size={20} />, label: "Twitter" },
-                  { icon: <InstagramIcon size={20} />, label: "Instagram" },
-                  { icon: <LinkedinIcon size={20} />, label: "LinkedIn" },
-                ].map((social) => (
+                  { icon: FacebookIcon, label: "Facebook" },
+                  { icon: TwitterIcon, label: "Twitter" },
+                  { icon: InstagramIcon, label: "Instagram" },
+                  { icon: LinkedinIcon, label: "LinkedIn" },
+                ].map((SocialIcon) => (
                   <a
-                    key={social.label}
+                    key={SocialIcon.label}
                     href="#"
-                    className="text-gray-400 hover:text-amber-600 transition-all duration-300 group/social"
-                    aria-label={social.label}
+                    className={`transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-amber-400' 
+                        : 'text-gray-600 hover:text-amber-600'
+                    }`}
+                    aria-label={SocialIcon.label}
                   >
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-500/20 rounded-full blur group-hover/social:blur-md transition-all duration-300" />
-                      <div className="relative bg-white p-2 rounded-lg border border-gray-200 group-hover/social:border-amber-200 group-hover/social:scale-110 transition-all duration-300">
-                        {social.icon}
-                      </div>
-                    </div>
+                    <SocialIcon.icon size={18} />
                   </a>
                 ))}
               </div>
 
               {/* Legal Links */}
               <div className="flex items-center gap-6 text-sm">
-                <Link href="/privacy" className="text-gray-500 hover:text-amber-600 transition-colors duration-300">
+                <Link href="/privacy" className={`transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'text-gray-500 hover:text-amber-400' 
+                    : 'text-gray-500 hover:text-amber-600'
+                }`}>
                   Privacy Policy
                 </Link>
-                <Link href="/terms" className="text-gray-500 hover:text-amber-600 transition-colors duration-300">
+                <Link href="/terms" className={`transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'text-gray-500 hover:text-amber-400' 
+                    : 'text-gray-500 hover:text-amber-600'
+                }`}>
                   Terms of Service
                 </Link>
-                <Link href="/cookies" className="text-gray-500 hover:text-amber-600 transition-colors duration-300">
+                <Link href="/cookies" className={`transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'text-gray-500 hover:text-amber-400' 
+                    : 'text-gray-500 hover:text-amber-600'
+                }`}>
                   Cookie Policy
                 </Link>
               </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className={`mt-6 pt-6 border-t flex flex-col sm:flex-row justify-center items-center gap-4 text-sm ${
+              isDarkMode ? 'border-gray-800 text-gray-500' : 'border-gray-200 text-gray-600'
+            }`}>
+              <a href="tel:+12124567890" className={`hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-300 flex items-center gap-2 ${
+                isDarkMode ? 'hover:text-amber-400' : 'hover:text-amber-600'
+              }`}>
+                <PhoneIcon size={16} />
+                +1 (212) 456-7890
+              </a>
+              <span className={`hidden sm:inline ${
+                isDarkMode ? 'text-gray-700' : 'text-gray-300'
+              }`}>
+                •
+              </span>
+              <a href="mailto:hello@luxeproperties.com" className={`transition-colors duration-300 flex items-center gap-2 ${
+                isDarkMode 
+                  ? 'text-gray-500 hover:text-amber-400' 
+                  : 'text-gray-600 hover:text-amber-600'
+              }`}>
+                <MailIcon size={16} />
+                hello@luxeproperties.com
+              </a>
             </div>
           </div>
         </div>
