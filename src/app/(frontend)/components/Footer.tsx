@@ -323,30 +323,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className={`mt-6 pt-6 border-t flex flex-col sm:flex-row justify-center items-center gap-4 text-sm ${
-              isDarkMode ? 'border-gray-800 text-gray-500' : 'border-gray-200 text-gray-600'
-            }`}>
-              <a href="tel:+12124567890" className={`hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-300 flex items-center gap-2 ${
-                isDarkMode ? 'hover:text-amber-400' : 'hover:text-amber-600'
-              }`}>
-                <PhoneIcon size={16} />
-                +1 (212) 456-7890
-              </a>
-              <span className={`hidden sm:inline ${
-                isDarkMode ? 'text-gray-700' : 'text-gray-300'
-              }`}>
-                •
-              </span>
-              <a href="mailto:hello@luxeproperties.com" className={`transition-colors duration-300 flex items-center gap-2 ${
-                isDarkMode 
-                  ? 'text-gray-500 hover:text-amber-400' 
-                  : 'text-gray-600 hover:text-amber-600'
-              }`}>
-                <MailIcon size={16} />
-                hello@luxeproperties.com
-              </a>
-            </div>
+           
           </div>
         </div>
       </footer>
