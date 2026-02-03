@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { properties, categories, blogs, faqs } from "@/data";
-import PropertyCard from "@/components/PropertyCard";
-import BlogCard from "@/components/BlogCard";
-import FAQAccordion from "@/components/FAQAccordion";
+import PropertyCard from "@/app/(frontend)/components/PropertyCard";
+import BlogCard from "@/app/(frontend)/components/BlogCard";
+import FAQAccordion from "@/app/(frontend)/components/FAQAccordion";
 import {
   BedIcon,
   BathIcon,

@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { blogs } from "@/data";
-import BlogCard from "@/components/BlogCard";
+import BlogCard from "@/app/(frontend)/components/BlogCard";
 import {
   ClockIcon,
   ArrowRightIcon,

@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { properties } from "@/data";
-import PropertyCard from "@/components/PropertyCard";
+import PropertyCard from "@/app/(frontend)/components/PropertyCard";
 import {
   BedIcon,
   BathIcon,

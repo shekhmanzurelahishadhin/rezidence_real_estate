@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { properties, categories } from "@/data";
-import PropertyCard from "@/components/PropertyCard";
+import PropertyCard from "@/app/(frontend)/components/PropertyCard";
 import {
   FilterIcon,
   GridIcon,

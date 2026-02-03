@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { blogs } from "@/data";
-import BlogCard from "@/components/BlogCard";
+import BlogCard from "@/app/(frontend)/components/BlogCard";
 import { 
   SearchIcon, 
   ChevronRightIcon, 

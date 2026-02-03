@@ -318,7 +318,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/login"
+                href="/signin"
                 className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-amber-100 hover:text-amber-600 transition-colors duration-300"
               >
                 <UserIcon size={20} className="text-gray-600" />
@@ -452,7 +452,7 @@ export default function Navbar() {
                   Schedule Consultation
                 </Link>
                 <Link
-                  href="/login"
+                  href="/signin"
                   onClick={() => setMobileOpen(false)}
                   className="block w-full border-2 border-gray-300 text-gray-700 font-semibold py-3.5 rounded-xl text-center hover:border-amber-400 hover:text-amber-600 transition-all duration-300"
                 >

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/app/(frontend)/components/Navbar";
+import Footer from "@/app/(frontend)/components/Footer";
 
 export const metadata: Metadata = {
   title: "Homely – Luxury Real Estate",
