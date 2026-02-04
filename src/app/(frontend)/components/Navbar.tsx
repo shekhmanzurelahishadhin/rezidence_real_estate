@@ -10,13 +10,13 @@ import {
   MailIcon,
   ChevronDownIcon,
   ArrowRightIcon,
-  UserIcon
+  UserIcon,
 } from "@/assets/icons";
 
 const navLinks = [
   {
     label: "Home",
-    href: "/"
+    href: "/",
   },
   {
     label: "Properties",
@@ -28,7 +28,7 @@ const navLinks = [
       { label: "Apartments", href: "/properties?category=apartments" },
       { label: "Villas", href: "/properties?category=villas" },
       { label: "Commercial", href: "/properties?category=commercial" },
-    ]
+    ],
   },
   {
     label: "Blog",
@@ -39,7 +39,7 @@ const navLinks = [
       { label: "Investment Tips", href: "/blogs?category=investment" },
       { label: "Home Buying", href: "/blogs?category=buying" },
       { label: "Interior Design", href: "/blogs?category=design" },
-    ]
+    ],
   },
   {
     label: "Services",
@@ -50,15 +50,15 @@ const navLinks = [
       { label: "Mortgage Assistance", href: "/services/mortgage" },
       { label: "Property Management", href: "/services/management" },
       { label: "Investment Consultation", href: "/services/consultation" },
-    ]
+    ],
   },
   {
     label: "About",
-    href: "/about"
+    href: "/about",
   },
   {
     label: "Contact",
-    href: "/contact"
+    href: "/contact",
   },
 ];
 
@@ -103,7 +103,7 @@ export default function Navbar() {
       dropdownTimeoutRef.current = null;
     }
 
-    if (navLinks.find(link => link.label === label)?.dropdown) {
+    if (navLinks.find((link) => link.label === label)?.dropdown) {
       setActiveDropdown(label);
     }
   };
@@ -134,7 +134,7 @@ export default function Navbar() {
 
   // Handle click on parent menu with dropdown
   const handleParentMenuClick = (label: string) => {
-    const link = navLinks.find(link => link.label === label);
+    const link = navLinks.find((link) => link.label === label);
 
     if (link?.dropdown) {
       // Toggle dropdown on click
@@ -158,9 +158,10 @@ export default function Navbar() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      const isDropdownRelated = target.closest('.dropdown-container') ||
-        target.closest('.dropdown-menu') ||
-        target.closest('.nav-item');
+      const isDropdownRelated =
+        target.closest(".dropdown-container") ||
+        target.closest(".dropdown-menu") ||
+        target.closest(".nav-item");
 
       if (!isDropdownRelated && clickedDropdown) {
         setClickedDropdown(null);
@@ -168,19 +169,21 @@ export default function Navbar() {
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [clickedDropdown]);
 
   // Mobile dropdown state
-  const [expandedMobileDropdowns, setExpandedMobileDropdowns] = useState<Record<string, boolean>>({});
+  const [expandedMobileDropdowns, setExpandedMobileDropdowns] = useState<
+    Record<string, boolean>
+  >({});
 
   const toggleMobileDropdown = (label: string) => {
-    setExpandedMobileDropdowns(prev => ({
+    setExpandedMobileDropdowns((prev) => ({
       ...prev,
-      [label]: !prev[label]
+      [label]: !prev[label],
     }));
   };
 
@@ -188,18 +191,16 @@ export default function Navbar() {
     <>
       {/* Main Navbar */}
       <nav
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+          scrolled
             ? "bg-white/95 backdrop-blur-xl shadow-lg py-0"
             : "bg-white/90 backdrop-blur-lg py-2"
-          }`}
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link
-              href="/"
-              className="flex items-center gap-3 group"
-            >
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <span className="text-white text-xl font-bold">H</span>
@@ -217,8 +218,10 @@ export default function Navbar() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href ||
-                  (link.dropdown && link.dropdown.some(item => item.href === pathname));
+                const isActive =
+                  pathname === link.href ||
+                  (link.dropdown &&
+                    link.dropdown.some((item) => item.href === pathname));
 
                 return (
                   <div
@@ -234,26 +237,29 @@ export default function Navbar() {
                         // Parent menu with dropdown - not a link, click toggles dropdown
                         <button
                           onClick={() => handleParentMenuClick(link.label)}
-                          className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer ${isActive || activeDropdown === link.label
+                          className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer ${
+                            isActive || activeDropdown === link.label
                               ? "text-amber-600 bg-amber-50"
                               : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
-                            }`}
+                          }`}
                         >
                           {link.label}
                           <ChevronDownIcon
                             size={16}
-                            className={`transition-transform duration-300 ${activeDropdown === link.label ? "rotate-180" : ""
-                              }`}
+                            className={`transition-transform duration-300 ${
+                              activeDropdown === link.label ? "rotate-180" : ""
+                            }`}
                           />
                         </button>
                       ) : (
                         // Regular link without dropdown
                         <Link
                           href={link.href}
-                          className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${isActive
+                          className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                            isActive
                               ? "text-amber-600 bg-amber-50"
                               : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
-                            }`}
+                          }`}
                         >
                           {link.label}
                         </Link>
@@ -277,7 +283,9 @@ export default function Navbar() {
                               setClickedDropdown(null);
                             }}
                           >
-                            <span className="text-sm font-medium">{item.label}</span>
+                            <span className="text-sm font-medium">
+                              {item.label}
+                            </span>
                             <ArrowRightIcon
                               size={14}
                               className="opacity-0 group-hover:opacity-100 translate-x-[-4px] group-hover:translate-x-0 transition-all duration-300"
@@ -358,7 +366,9 @@ export default function Navbar() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Call us</div>
-                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">+1 (212) 456-7890</div>
+                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">
+                      +1 (212) 456-7890
+                    </div>
                   </div>
                 </a>
                 <a
@@ -370,7 +380,9 @@ export default function Navbar() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Email us</div>
-                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">hello@homely.com</div>
+                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">
+                      hello@homely.com
+                    </div>
                   </div>
                 </a>
               </div>
@@ -382,16 +394,20 @@ export default function Navbar() {
                   const hasDropdown = link.dropdown && link.dropdown.length > 0;
 
                   return (
-                    <div key={link.label} className="border-b border-gray-100 last:border-b-0">
+                    <div
+                      key={link.label}
+                      className="border-b border-gray-100 last:border-b-0"
+                    >
                       <div className="flex items-center justify-between">
                         {hasDropdown ? (
                           // Mobile: Parent menu with dropdown - button to toggle
                           <button
                             onClick={() => toggleMobileDropdown(link.label)}
-                            className={`flex-1 py-3 text-base font-medium text-left transition-colors ${isActive || expandedMobileDropdowns[link.label]
+                            className={`flex-1 py-3 text-base font-medium text-left transition-colors ${
+                              isActive || expandedMobileDropdowns[link.label]
                                 ? "text-amber-600"
                                 : "text-gray-700 hover:text-amber-600"
-                              }`}
+                            }`}
                           >
                             {link.label}
                           </button>
@@ -400,10 +416,11 @@ export default function Navbar() {
                           <Link
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
-                            className={`flex-1 py-3 text-base font-medium transition-colors ${isActive
+                            className={`flex-1 py-3 text-base font-medium transition-colors ${
+                              isActive
                                 ? "text-amber-600"
                                 : "text-gray-700 hover:text-amber-600"
-                              }`}
+                            }`}
                           >
                             {link.label}
                           </Link>
@@ -415,8 +432,11 @@ export default function Navbar() {
                           >
                             <ChevronDownIcon
                               size={20}
-                              className={`transition-transform duration-300 ${expandedMobileDropdowns[link.label] ? "rotate-180" : ""
-                                }`}
+                              className={`transition-transform duration-300 ${
+                                expandedMobileDropdowns[link.label]
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                             />
                           </button>
                         )}
