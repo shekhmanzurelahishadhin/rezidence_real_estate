@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import Navbar from "@/app/(frontend)/components/Navbar";
 import Footer from "@/app/(frontend)/components/Footer";
+import { ThemeProvider } from "./../ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Homely – Luxury Real Estate",
@@ -20,9 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <ThemeProvider>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

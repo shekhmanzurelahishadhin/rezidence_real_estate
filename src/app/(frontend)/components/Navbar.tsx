@@ -12,6 +12,7 @@ import {
   ArrowRightIcon,
   UserIcon,
 } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 const navLinks = [
   {
@@ -63,6 +64,7 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const { isDarkMode } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -97,7 +99,6 @@ export default function Navbar() {
   }, []);
 
   const handleNavItemEnter = (label: string) => {
-    // Clear any existing timeout
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
@@ -109,7 +110,6 @@ export default function Navbar() {
   };
 
   const handleNavItemLeave = () => {
-    // Only hide on mouse leave if not clicked open
     if (!clickedDropdown) {
       dropdownTimeoutRef.current = setTimeout(() => {
         setActiveDropdown(null);
@@ -118,7 +118,6 @@ export default function Navbar() {
   };
 
   const handleDropdownEnter = () => {
-    // Clear timeout when entering dropdown
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
@@ -126,35 +125,28 @@ export default function Navbar() {
   };
 
   const handleDropdownLeave = () => {
-    // Close dropdown immediately when leaving it (only if not clicked open)
     if (!clickedDropdown) {
       setActiveDropdown(null);
     }
   };
 
-  // Handle click on parent menu with dropdown
   const handleParentMenuClick = (label: string) => {
     const link = navLinks.find((link) => link.label === label);
 
     if (link?.dropdown) {
-      // Toggle dropdown on click
       if (clickedDropdown === label) {
-        // Close if already open
         setClickedDropdown(null);
         setActiveDropdown(null);
       } else {
-        // Open dropdown
         setClickedDropdown(label);
         setActiveDropdown(label);
       }
     } else {
-      // Regular link without dropdown - handled by Link component
       setActiveDropdown(null);
       setClickedDropdown(null);
     }
   };
 
-  // Close clicked dropdown when clicking elsewhere
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -175,7 +167,6 @@ export default function Navbar() {
     };
   }, [clickedDropdown]);
 
-  // Mobile dropdown state
   const [expandedMobileDropdowns, setExpandedMobileDropdowns] = useState<
     Record<string, boolean>
   >({});
@@ -193,7 +184,11 @@ export default function Navbar() {
       <nav
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-lg py-0"
+            ? isDarkMode
+              ? "bg-gray-900/95 backdrop-blur-xl shadow-lg py-0"
+              : "bg-white/95 backdrop-blur-xl shadow-lg py-0"
+            : isDarkMode
+            ? "bg-gray-900/90 backdrop-blur-lg py-2"
             : "bg-white/90 backdrop-blur-lg py-2"
         }`}
       >
@@ -208,10 +203,22 @@ export default function Navbar() {
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-ping" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors duration-300">
+                <h1
+                  className={`text-xl font-bold transition-colors duration-300 ${
+                    isDarkMode
+                      ? "text-white group-hover:text-amber-400"
+                      : "text-gray-900 group-hover:text-amber-600"
+                  }`}
+                >
                   Homely Homes
                 </h1>
-                <p className="text-gray-500 text-xs">Premium Real Estate</p>
+                <p
+                  className={`text-xs ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Premium Real Estate
+                </p>
               </div>
             </Link>
 
@@ -234,12 +241,15 @@ export default function Navbar() {
                       onMouseLeave={handleNavItemLeave}
                     >
                       {link.dropdown ? (
-                        // Parent menu with dropdown - not a link, click toggles dropdown
                         <button
                           onClick={() => handleParentMenuClick(link.label)}
                           className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer ${
                             isActive || activeDropdown === link.label
-                              ? "text-amber-600 bg-amber-50"
+                              ? isDarkMode
+                                ? "text-amber-400 bg-amber-500/10"
+                                : "text-amber-600 bg-amber-50"
+                              : isDarkMode
+                              ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
                               : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
                           }`}
                         >
@@ -248,16 +258,19 @@ export default function Navbar() {
                             size={16}
                             className={`transition-transform duration-300 ${
                               activeDropdown === link.label ? "rotate-180" : ""
-                            }`}
+                            } ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
                           />
                         </button>
                       ) : (
-                        // Regular link without dropdown
                         <Link
                           href={link.href}
                           className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                             isActive
-                              ? "text-amber-600 bg-amber-50"
+                              ? isDarkMode
+                                ? "text-amber-400 bg-amber-500/10"
+                                : "text-amber-600 bg-amber-50"
+                              : isDarkMode
+                              ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
                               : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
                           }`}
                         >
@@ -269,7 +282,11 @@ export default function Navbar() {
                     {/* Dropdown Menu */}
                     {link.dropdown && activeDropdown === link.label && (
                       <div
-                        className="absolute top-full left-0 mt-1 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 animate-fadeIn z-50 dropdown-menu"
+                        className={`absolute top-full left-0 mt-1 w-64 rounded-xl shadow-2xl border py-2 animate-fadeIn z-50 dropdown-menu ${
+                          isDarkMode
+                            ? "bg-gray-800 border-gray-700"
+                            : "bg-white border-gray-100"
+                        }`}
                         onMouseEnter={handleDropdownEnter}
                         onMouseLeave={handleDropdownLeave}
                       >
@@ -277,7 +294,11 @@ export default function Navbar() {
                           <Link
                             key={item.label}
                             href={item.href}
-                            className="flex items-center justify-between px-4 py-3 text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors duration-200 group"
+                            className={`flex items-center justify-between px-4 py-3 transition-colors duration-200 group ${
+                              isDarkMode
+                                ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
+                                : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
+                            }`}
                             onClick={() => {
                               setActiveDropdown(null);
                               setClickedDropdown(null);
@@ -303,13 +324,32 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-4">
               <a
                 href="tel:+12124567890"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-all duration-300 group"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 group ${
+                  isDarkMode
+                    ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
+                    : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
+                }`}
               >
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors duration-300">
-                  <PhoneIcon size={16} className="text-amber-600" />
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode
+                      ? "bg-amber-500/20 group-hover:bg-amber-500/30"
+                      : "bg-amber-100 group-hover:bg-amber-200"
+                  }`}
+                >
+                  <PhoneIcon
+                    size={16}
+                    className={isDarkMode ? "text-amber-400" : "text-amber-600"}
+                  />
                 </div>
                 <div className="text-left">
-                  <div className="text-xs text-gray-500">Call us</div>
+                  <div
+                    className={`text-xs ${
+                      isDarkMode ? "text-gray-500" : "text-gray-500"
+                    }`}
+                  >
+                    Call us
+                  </div>
                   <div className="text-sm font-semibold">+1 (212) 456-7890</div>
                 </div>
               </a>
@@ -327,15 +367,26 @@ export default function Navbar() {
 
               <Link
                 href="/signin"
-                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-amber-100 hover:text-amber-600 transition-colors duration-300"
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                  isDarkMode
+                    ? "bg-gray-800 hover:bg-amber-500/20 hover:text-amber-400"
+                    : "bg-gray-100 hover:bg-amber-100 hover:text-amber-600"
+                }`}
               >
-                <UserIcon size={20} className="text-gray-600" />
+                <UserIcon
+                  size={20}
+                  className={isDarkMode ? "text-gray-400" : "text-gray-600"}
+                />
               </Link>
             </div>
 
             {/* Mobile Hamburger */}
             <button
-              className="lg:hidden text-gray-700 p-2 hover:text-amber-600 transition-colors duration-300"
+              className={`lg:hidden p-2 transition-colors duration-300 ${
+                isDarkMode
+                  ? "text-gray-300 hover:text-amber-400"
+                  : "text-gray-700 hover:text-amber-600"
+              }`}
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -353,34 +404,86 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-100 shadow-2xl animate-slideDown z-50">
+          <div
+            className={`lg:hidden absolute top-full left-0 right-0 border-t shadow-2xl animate-slideDown z-50 ${
+              isDarkMode
+                ? "bg-gray-900 border-gray-800"
+                : "bg-white border-gray-100"
+            }`}
+          >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               {/* Contact Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <a
                   href="tel:+12124567890"
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-amber-50 transition-colors duration-300"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
+                    isDarkMode
+                      ? "bg-gray-800 hover:bg-amber-500/10"
+                      : "bg-gray-50 hover:bg-amber-50"
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <PhoneIcon size={18} className="text-amber-600" />
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
+                    }`}
+                  >
+                    <PhoneIcon
+                      size={18}
+                      className={
+                        isDarkMode ? "text-amber-400" : "text-amber-600"
+                      }
+                    />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-500">Call us</div>
-                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">
+                    <div
+                      className={`text-xs ${
+                        isDarkMode ? "text-gray-500" : "text-gray-500"
+                      }`}
+                    >
+                      Call us
+                    </div>
+                    <div
+                      className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
+                        isDarkMode ? "text-gray-300" : "text-gray-900"
+                      }`}
+                    >
                       +1 (212) 456-7890
                     </div>
                   </div>
                 </a>
                 <a
                   href="mailto:hello@homely.com"
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-amber-50 transition-colors duration-300"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
+                    isDarkMode
+                      ? "bg-gray-800 hover:bg-amber-500/10"
+                      : "bg-gray-50 hover:bg-amber-50"
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <MailIcon size={18} className="text-amber-600" />
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
+                    }`}
+                  >
+                    <MailIcon
+                      size={18}
+                      className={
+                        isDarkMode ? "text-amber-400" : "text-amber-600"
+                      }
+                    />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-500">Email us</div>
-                    <div className="text-sm font-semibold break-words sm:whitespace-nowrap">
+                    <div
+                      className={`text-xs ${
+                        isDarkMode ? "text-gray-500" : "text-gray-500"
+                      }`}
+                    >
+                      Email us
+                    </div>
+                    <div
+                      className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
+                        isDarkMode ? "text-gray-300" : "text-gray-900"
+                      }`}
+                    >
                       hello@homely.com
                     </div>
                   </div>
@@ -396,29 +499,37 @@ export default function Navbar() {
                   return (
                     <div
                       key={link.label}
-                      className="border-b border-gray-100 last:border-b-0"
+                      className={`border-b last:border-b-0 ${
+                        isDarkMode ? "border-gray-800" : "border-gray-100"
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         {hasDropdown ? (
-                          // Mobile: Parent menu with dropdown - button to toggle
                           <button
                             onClick={() => toggleMobileDropdown(link.label)}
                             className={`flex-1 py-3 text-base font-medium text-left transition-colors ${
                               isActive || expandedMobileDropdowns[link.label]
-                                ? "text-amber-600"
+                                ? isDarkMode
+                                  ? "text-amber-400"
+                                  : "text-amber-600"
+                                : isDarkMode
+                                ? "text-gray-300 hover:text-amber-400"
                                 : "text-gray-700 hover:text-amber-600"
                             }`}
                           >
                             {link.label}
                           </button>
                         ) : (
-                          // Mobile: Regular link without dropdown
                           <Link
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
                             className={`flex-1 py-3 text-base font-medium transition-colors ${
                               isActive
-                                ? "text-amber-600"
+                                ? isDarkMode
+                                  ? "text-amber-400"
+                                  : "text-amber-600"
+                                : isDarkMode
+                                ? "text-gray-300 hover:text-amber-400"
                                 : "text-gray-700 hover:text-amber-600"
                             }`}
                           >
@@ -436,6 +547,8 @@ export default function Navbar() {
                                 expandedMobileDropdowns[link.label]
                                   ? "rotate-180"
                                   : ""
+                              } ${
+                                isDarkMode ? "text-gray-400" : "text-gray-600"
                               }`}
                             />
                           </button>
@@ -450,7 +563,11 @@ export default function Navbar() {
                               key={item.label}
                               href={item.href}
                               onClick={() => setMobileOpen(false)}
-                              className="block py-2.5 text-sm text-gray-600 hover:text-amber-600 hover:pl-2 transition-all duration-300"
+                              className={`block py-2.5 text-sm hover:pl-2 transition-all duration-300 ${
+                                isDarkMode
+                                  ? "text-gray-400 hover:text-amber-400"
+                                  : "text-gray-600 hover:text-amber-600"
+                              }`}
                             >
                               {item.label}
                             </Link>
@@ -463,7 +580,11 @@ export default function Navbar() {
               </div>
 
               {/* Mobile CTA Buttons */}
-              <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
+              <div
+                className={`mt-6 pt-6 border-t space-y-3 ${
+                  isDarkMode ? "border-gray-800" : "border-gray-100"
+                }`}
+              >
                 <Link
                   href="/contact"
                   onClick={() => setMobileOpen(false)}
@@ -474,7 +595,11 @@ export default function Navbar() {
                 <Link
                   href="/signin"
                   onClick={() => setMobileOpen(false)}
-                  className="block w-full border-2 border-gray-300 text-gray-700 font-semibold py-3.5 rounded-xl text-center hover:border-amber-400 hover:text-amber-600 transition-all duration-300"
+                  className={`block w-full border-2 font-semibold py-3.5 rounded-xl text-center transition-all duration-300 ${
+                    isDarkMode
+                      ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400"
+                      : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                  }`}
                 >
                   Client Login
                 </Link>
