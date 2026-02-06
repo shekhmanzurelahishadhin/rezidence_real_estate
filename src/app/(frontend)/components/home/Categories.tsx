@@ -3,21 +3,34 @@
 import Link from "next/link";
 import { categories } from "@/data";
 import { ChevronRightIcon } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 export function Categories() {
+  const { isDarkMode } = useTheme();
+
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+    <section className={`py-20 transition-all duration-500 ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+        : "bg-gradient-to-b from-white to-gray-50"
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-            <span className="w-8 h-0.5 bg-amber-400" />
+          <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 ${
+            isDarkMode ? "text-amber-400" : "text-amber-600"
+          }`}>
+            <span className={`w-8 h-0.5 ${isDarkMode ? "bg-amber-400" : "bg-amber-500"}`} />
             EXPLORE PROPERTIES
           </span>
-          <h2 className="text-gray-900 text-4xl lg:text-5xl font-bold mb-6">
+          <h2 className={`text-4xl lg:text-5xl font-bold mb-6 ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}>
             Find Your Perfect <span className="text-amber-500">Property Type</span>
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className={`text-lg ${
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
             Browse through our diverse collection of premium properties tailored to your lifestyle.
           </p>
         </div>
@@ -72,7 +85,11 @@ export function Categories() {
               <Link
                 key={cat.id}
                 href={`/properties?category=${cat.id}`}
-                className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+                className={`group relative rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 ${
+                  isDarkMode 
+                    ? "bg-gray-800 shadow-lg shadow-black/10 hover:shadow-2xl hover:shadow-black/20" 
+                    : "bg-white shadow-lg hover:shadow-2xl"
+                }`}
               >
                 <div className="relative h-48 overflow-hidden">
                   {/* Main Category Image */}
@@ -84,15 +101,25 @@ export function Categories() {
                   />
 
                   {/* Dark Overlay for better text contrast */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
 
                   {/* Category Icon */}
                   <div className="absolute top-4 left-4 flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                    <div className={`w-10 h-10 rounded-lg backdrop-blur-sm border flex items-center justify-center ${
+                      isDarkMode 
+                        ? "bg-white/20 border-white/30" 
+                        : "bg-white/30 border-white/40"
+                    }`}>
                       <span className="text-lg">{getCategoryIcon(cat.label)}</span>
                     </div>
-                    <div className="bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-                      <span className="text-white text-xs font-semibold">{cat.count}+</span>
+                    <div className={`backdrop-blur-sm rounded-full px-3 py-1 ${
+                      isDarkMode ? "bg-black/50" : "bg-white/50"
+                    }`}>
+                      <span className={`text-xs font-semibold ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}>
+                        {cat.count}+
+                      </span>
                     </div>
                   </div>
 
@@ -106,23 +133,38 @@ export function Categories() {
                 </div>
 
                 <div className="p-5">
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <p className={`text-sm mb-4 line-clamp-2 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
                     {cat.description}
                   </p>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="text-amber-600 text-sm font-semibold flex items-center gap-1">
+                  <div className={`flex items-center justify-between pt-3 border-t ${
+                    isDarkMode ? "border-gray-700" : "border-gray-100"
+                  }`}>
+                    <span className={`flex items-center gap-1 text-sm font-semibold ${
+                      isDarkMode ? "text-amber-400" : "text-amber-600"
+                    }`}>
                       Browse Properties
-                      <ChevronRightIcon size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
+                      <ChevronRightIcon 
+                        size={16} 
+                        className={`group-hover:translate-x-1 transition-transform duration-300 ${
+                          isDarkMode ? "text-amber-400" : "text-amber-600"
+                        }`} 
+                      />
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${
+                      isDarkMode ? "text-gray-400" : "text-gray-400"
+                    }`}>
                       Available now
                     </span>
                   </div>
                 </div>
 
                 {/* Hover Border Effect */}
-                <div className="absolute inset-0 border-2 border-transparent group-hover:border-amber-400/30 rounded-2xl transition-colors duration-300 pointer-events-none" />
+                <div className={`absolute inset-0 border-2 border-transparent group-hover:border-amber-400/30 rounded-2xl transition-colors duration-300 pointer-events-none ${
+                  isDarkMode ? "" : ""
+                }`} />
               </Link>
             );
           })}
