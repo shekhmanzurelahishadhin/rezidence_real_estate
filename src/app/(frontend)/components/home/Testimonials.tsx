@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 const testimonials = [
   {
@@ -46,6 +47,7 @@ const testimonials = [
 ];
 
 export function Testimonials() {
+  const { isDarkMode } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -112,17 +114,27 @@ export function Testimonials() {
   const visibleTestimonials = getVisibleTestimonials();
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+    <section className={`py-20 transition-all duration-500 overflow-hidden ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+        : "bg-gradient-to-b from-white to-gray-50"
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-            <span className="w-8 h-0.5 bg-amber-400" />
+          <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 ${
+            isDarkMode ? "text-amber-400" : "text-amber-600"
+          }`}>
+            <span className={`w-8 h-0.5 ${isDarkMode ? "bg-amber-400" : "bg-amber-500"}`} />
             CLIENT TESTIMONIALS
           </span>
-          <h2 className="text-gray-900 text-4xl lg:text-5xl font-bold mb-6">
+          <h2 className={`text-4xl lg:text-5xl font-bold mb-6 ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}>
             Trusted by <span className="text-amber-500">Thousands</span>
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className={`text-lg ${
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
             Hear what our clients have to say about their experience
           </p>
         </div>
@@ -134,20 +146,32 @@ export function Testimonials() {
             onClick={prevSlide}
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-white p-3 rounded-full shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 group hidden md:block"
+            className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 group hidden md:block ${
+              isDarkMode 
+                ? "bg-gray-800 hover:bg-gray-700" 
+                : "bg-white hover:bg-gray-50"
+            }`}
             aria-label="Previous testimonial"
           >
-            <ChevronLeftIcon size={24} className="text-gray-600 group-hover:text-amber-600 transition-colors duration-300" />
+            <ChevronLeftIcon size={24} className={`group-hover:text-amber-600 transition-colors duration-300 ${
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            }`} />
           </button>
 
           <button
             onClick={nextSlide}
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-white p-3 rounded-full shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 group hidden md:block"
+            className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 group hidden md:block ${
+              isDarkMode 
+                ? "bg-gray-800 hover:bg-gray-700" 
+                : "bg-white hover:bg-gray-50"
+            }`}
             aria-label="Next testimonial"
           >
-            <ChevronRightIcon size={24} className="text-gray-600 group-hover:text-amber-600 transition-colors duration-300" />
+            <ChevronRightIcon size={24} className={`group-hover:text-amber-600 transition-colors duration-300 ${
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            }`} />
           </button>
 
           {/* Carousel Track */}
@@ -158,9 +182,13 @@ export function Testimonials() {
                 <div className="w-full max-w-lg">
                   <div
                     key={currentIndex}
-                    className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500"
+                    className={`rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 ${
+                      isDarkMode ? "bg-gray-800" : "bg-white"
+                    }`}
                   >
-                    <div className="absolute top-8 right-8 text-amber-100 text-5xl">"</div>
+                    <div className={`absolute top-8 right-8 text-5xl ${
+                      isDarkMode ? "text-amber-500/20" : "text-amber-100"
+                    }`}>"</div>
 
                     <div className="flex gap-1 mb-6">
                       {[...Array(testimonials[currentIndex].rating)].map((_, i) => (
@@ -168,11 +196,15 @@ export function Testimonials() {
                       ))}
                     </div>
 
-                    <p className="text-gray-600 text-lg italic mb-8 relative z-10">
+                    <p className={`text-lg italic mb-8 relative z-10 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>
                       "{testimonials[currentIndex].quote}"
                     </p>
 
-                    <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+                    <div className={`flex items-center gap-4 pt-6 border-t ${
+                      isDarkMode ? "border-gray-700" : "border-gray-100"
+                    }`}>
                       <div className="relative">
                         <div
                           className="w-12 h-12 rounded-full bg-cover bg-center"
@@ -183,8 +215,16 @@ export function Testimonials() {
                         </div>
                       </div>
                       <div>
-                        <div className="font-bold text-gray-900">{testimonials[currentIndex].author}</div>
-                        <div className="text-gray-500 text-sm">{testimonials[currentIndex].role}</div>
+                        <div className={`font-bold ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}>
+                          {testimonials[currentIndex].author}
+                        </div>
+                        <div className={`text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}>
+                          {testimonials[currentIndex].role}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -200,12 +240,14 @@ export function Testimonials() {
                       <div
                         key={actualIndex}
                         className={`
-                          bg-white rounded-2xl p-6 lg:p-8 shadow-xl transition-all duration-500
+                          rounded-2xl p-6 lg:p-8 shadow-xl transition-all duration-500
                           ${isCenter
-                            ? 'scale-100 z-20 shadow-2xl border border-amber-100'
+                            ? 'scale-100 z-20 shadow-2xl'
                             : 'scale-95 lg:scale-90 opacity-80 blur-[1px] hover:blur-0 hover:opacity-100 hover:scale-95'
                           }
                           ${index === 0 ? 'rotate-[-1deg]' : index === 2 ? 'rotate-[1deg]' : ''}
+                          ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
+                          ${isCenter && (isDarkMode ? 'border border-amber-500/30' : 'border border-amber-100')}
                         `}
                         style={{
                           width: isCenter ? '380px' : '340px',
@@ -213,7 +255,9 @@ export function Testimonials() {
                         }}
                       >
                         {/* Quote Icon */}
-                        <div className="absolute top-6 right-6 text-amber-100 text-4xl">"</div>
+                        <div className={`absolute top-6 right-6 text-4xl ${
+                          isDarkMode ? "text-amber-500/20" : "text-amber-100"
+                        }`}>"</div>
 
                         {/* Rating */}
                         <div className="flex gap-1 mb-4">
@@ -223,13 +267,17 @@ export function Testimonials() {
                         </div>
 
                         {/* Quote */}
-                        <p className="text-gray-600 lg:text-lg italic mb-6 relative z-10 line-clamp-5">
+                        <p className={`lg:text-lg italic mb-6 relative z-10 line-clamp-5 ${
+                          isDarkMode ? "text-gray-300" : "text-gray-600"
+                        }`}>
                           "{testimonial.quote}"
                         </p>
 
                         {/* Author */}
                         <div className="absolute bottom-6 left-6 right-6">
-                          <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+                          <div className={`flex items-center gap-4 pt-6 border-t ${
+                            isDarkMode ? "border-gray-700" : "border-gray-100"
+                          }`}>
                             <div className="relative">
                               <div
                                 className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-cover bg-center"
@@ -242,8 +290,16 @@ export function Testimonials() {
                               )}
                             </div>
                             <div>
-                              <div className="font-bold text-gray-900 text-sm lg:text-base">{testimonial.author}</div>
-                              <div className="text-gray-500 text-xs lg:text-sm">{testimonial.role}</div>
+                              <div className={`font-bold text-sm lg:text-base ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}>
+                                {testimonial.author}
+                              </div>
+                              <div className={`text-xs lg:text-sm ${
+                                isDarkMode ? "text-gray-400" : "text-gray-500"
+                              }`}>
+                                {testimonial.role}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -252,7 +308,11 @@ export function Testimonials() {
                         {isCenter && (
                           <>
                             <div className="absolute top-4 left-4 w-2 h-2 bg-amber-400 rounded-full animate-ping" />
-                            <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                            <div className={`absolute -top-2 -right-2 text-xs font-bold px-2 py-1 rounded-lg ${
+                              isDarkMode 
+                                ? "bg-amber-500 text-white" 
+                                : "bg-amber-500 text-white"
+                            }`}>
                               FEATURED
                             </div>
                           </>
@@ -269,17 +329,29 @@ export function Testimonials() {
           <div className="flex justify-center gap-4 mt-8 md:hidden">
             <button
               onClick={prevSlide}
-              className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 group"
+              className={`p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group ${
+                isDarkMode 
+                  ? "bg-gray-800 hover:bg-gray-700" 
+                  : "bg-white hover:bg-gray-50"
+              }`}
               aria-label="Previous testimonial"
             >
-              <ChevronLeftIcon size={20} className="text-gray-600 group-hover:text-amber-600 transition-colors duration-300" />
+              <ChevronLeftIcon size={20} className={`group-hover:text-amber-600 transition-colors duration-300 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`} />
             </button>
             <button
               onClick={nextSlide}
-              className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 group"
+              className={`p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group ${
+                isDarkMode 
+                  ? "bg-gray-800 hover:bg-gray-700" 
+                  : "bg-white hover:bg-gray-50"
+              }`}
               aria-label="Next testimonial"
             >
-              <ChevronRightIcon size={20} className="text-gray-600 group-hover:text-amber-600 transition-colors duration-300" />
+              <ChevronRightIcon size={20} className={`group-hover:text-amber-600 transition-colors duration-300 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`} />
             </button>
           </div>
 
@@ -296,8 +368,12 @@ export function Testimonials() {
                 className={`
                   w-2 h-2 rounded-full transition-all duration-300
                   ${index === currentIndex
-                    ? 'w-8 bg-amber-500'
-                    : 'bg-gray-300 hover:bg-gray-400'
+                    ? `w-8 ${isDarkMode ? 'bg-amber-500' : 'bg-amber-500'}`
+                    : `${
+                        isDarkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600' 
+                          : 'bg-gray-300 hover:bg-gray-400'
+                      }`
                   }
                 `}
                 aria-label={`Go to testimonial ${index + 1}`}
@@ -309,10 +385,20 @@ export function Testimonials() {
           <div className="flex justify-center items-center gap-2 mt-6">
             <button
               onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className="flex items-center gap-2 text-gray-500 text-sm hover:text-amber-600 transition-colors duration-300"
+              className={`flex items-center gap-2 text-sm hover:text-amber-600 transition-colors duration-300 ${
+                isDarkMode ? "text-gray-400" : "text-gray-500"
+              }`}
             >
-              <div className={`w-8 h-4 rounded-full transition-colors duration-300 ${isAutoPlaying ? 'bg-amber-500' : 'bg-gray-300'}`}>
-                <div className={`w-4 h-4 rounded-full bg-white transform transition-transform duration-300 ${isAutoPlaying ? 'translate-x-4' : 'translate-x-0'}`} />
+              <div className={`w-8 h-4 rounded-full transition-colors duration-300 ${
+                isAutoPlaying 
+                  ? 'bg-amber-500' 
+                  : isDarkMode 
+                    ? 'bg-gray-700' 
+                    : 'bg-gray-300'
+              }`}>
+                <div className={`w-4 h-4 rounded-full transform transition-transform duration-300 ${
+                  isAutoPlaying ? 'translate-x-4' : 'translate-x-0'
+                } ${isDarkMode ? 'bg-gray-300' : 'bg-white'}`} />
               </div>
               <span>{isAutoPlaying ? 'Auto-playing' : 'Click to play'}</span>
             </button>
