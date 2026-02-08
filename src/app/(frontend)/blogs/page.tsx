@@ -12,8 +12,10 @@ import {
   ClockIcon,
   CalendarIcon 
 } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 export default function BlogsPage() {
+  const { isDarkMode } = useTheme();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("latest");
@@ -57,54 +59,89 @@ export default function BlogsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className={`min-h-screen transition-all duration-500 ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+        : "bg-gradient-to-b from-white to-gray-50"
+    }`}>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-900 to-blue-950 pt-32 pb-20">
+      <section className="relative overflow-hidden pt-32 pb-20 transition-all duration-500"
+        style={{
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, #111827 0%, #1e293b 50%, #0f172a 100%)'
+            : 'linear-gradient(135deg, #111827 0%, #111827 50%, #1e3a8a 100%)'
+        }}
+      >
         {/* Background Image */}
         <div className="absolute inset-0">
           <div 
-            className="absolute inset-0 opacity-20"
+            className="absolute inset-0 transition-all duration-500"
             style={{
               backgroundImage: 'url(https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80)',
               backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundPosition: 'center',
+              opacity: isDarkMode ? 0.15 : 0.2
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+          <div className={`absolute inset-0 transition-all duration-500 ${
+            isDarkMode 
+              ? "bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent" 
+              : "bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"
+          }`} />
         </div>
 
         {/* Animated Elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-10 left-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className={`absolute top-20 right-20 w-72 h-72 rounded-full blur-3xl animate-pulse transition-all duration-500 ${
+          isDarkMode ? "bg-amber-400/10" : "bg-amber-500/10"
+        }`} />
+        <div className={`absolute bottom-10 left-10 w-48 h-48 rounded-full blur-3xl transition-all duration-500 ${
+          isDarkMode ? "bg-blue-400/10" : "bg-blue-500/10"
+        }`} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-white/20">
-              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-              <span className="text-amber-400 text-sm font-medium tracking-wide">
+            <div className={`inline-flex items-center gap-2 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-white/5 border-white/10" 
+                : "bg-white/10 border-white/20"
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse transition-all duration-500 ${
+                isDarkMode ? "bg-amber-400" : "bg-amber-400"
+              }`} />
+              <span className={`text-sm font-medium tracking-wide transition-colors duration-500 ${
+                isDarkMode ? "text-amber-300" : "text-amber-400"
+              }`}>
                 MARKET INSIGHTS
               </span>
             </div>
 
-            <h1 className="text-white text-5xl lg:text-6xl font-bold mb-6">
+            <h1 className="text-white text-5xl lg:text-6xl font-bold mb-6 transition-all duration-500">
               Real Estate <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Insights</span>
             </h1>
 
-            <p className="text-gray-300 text-lg max-w-2xl mx-auto mb-10">
+            <p className={`text-lg max-w-2xl mx-auto mb-10 transition-colors duration-500 ${
+              isDarkMode ? "text-gray-300" : "text-gray-300"
+            }`}>
               Expert analysis, market trends, and actionable advice to guide your property decisions.
             </p>
 
             {/* Search Bar */}
             <div className="max-w-2xl mx-auto">
               <div className="relative">
-                <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <SearchIcon className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-400"
+                }`} size={20} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search articles, topics, or keywords..."
-                  className="w-full bg-white/10 backdrop-blur-lg rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:border-amber-400 text-lg"
+                  className={`w-full backdrop-blur-lg rounded-2xl pl-12 pr-4 py-4 border focus:outline-none text-lg transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-white/5 text-white placeholder-gray-400 border-white/10 focus:border-amber-400" 
+                      : "bg-white/10 text-white placeholder-gray-400 border-white/20 focus:border-amber-400"
+                  }`}
                 />
               </div>
             </div>
@@ -114,7 +151,11 @@ export default function BlogsPage() {
 
       {/* Featured Blog Post */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gradient-to-r from-gray-900 to-blue-900 rounded-3xl overflow-hidden shadow-2xl">
+        <div className={`rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 ${
+          isDarkMode 
+            ? "bg-gradient-to-r from-gray-800 to-gray-900" 
+            : "bg-gradient-to-r from-gray-900 to-blue-900"
+        }`}>
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Image */}
             <div className="relative h-64 lg:h-full min-h-[400px]">
@@ -124,7 +165,11 @@ export default function BlogsPage() {
                   backgroundImage: `url(https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1973&q=80)`
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+                <div className={`absolute inset-0 transition-all duration-500 ${
+                  isDarkMode 
+                    ? "bg-gradient-to-r from-black/50 to-transparent" 
+                    : "bg-gradient-to-r from-black/40 to-transparent"
+                }`} />
               </div>
               
               {/* Category Badge */}
@@ -138,7 +183,11 @@ export default function BlogsPage() {
             {/* Content */}
             <div className="p-8 lg:p-12 flex flex-col justify-center">
               <div className="mb-4">
-                <span className="bg-white/10 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full transition-all duration-500 ${
+                  isDarkMode 
+                    ? "bg-white/10 text-white" 
+                    : "bg-white/10 text-white"
+                }`}>
                   {featuredPost.category}
                 </span>
               </div>
@@ -147,22 +196,30 @@ export default function BlogsPage() {
                 {featuredPost.title}
               </h2>
 
-              <p className="text-gray-300 text-lg mb-6">
+              <p className={`text-lg mb-6 transition-colors duration-500 ${
+                isDarkMode ? "text-gray-300" : "text-gray-300"
+              }`}>
                 {featuredPost.excerpt}
               </p>
 
-              <div className="flex items-center gap-6 text-gray-300 mb-8">
+              <div className="flex items-center gap-6 mb-8">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                     <span className="text-white text-sm font-bold">{featuredPost.author[0]}</span>
                   </div>
-                  <span className="text-sm">{featuredPost.author}</span>
+                  <span className={`text-sm transition-colors duration-500 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-300"
+                  }`}>{featuredPost.author}</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm">
+                <div className={`flex items-center gap-1 text-sm transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-300"
+                }`}>
                   <CalendarIcon size={14} />
                   {featuredPost.date}
                 </div>
-                <div className="flex items-center gap-1 text-sm">
+                <div className={`flex items-center gap-1 text-sm transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-300"
+                }`}>
                   <ClockIcon size={14} />
                   {featuredPost.readTime} read
                 </div>
@@ -176,7 +233,11 @@ export default function BlogsPage() {
                   Read Full Article
                   <ChevronRightIcon size={20} />
                 </Link>
-                <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors duration-300">
+                <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                  isDarkMode 
+                    ? "bg-white/10 hover:bg-white/20" 
+                    : "bg-white/10 hover:bg-white/20"
+                }`}>
                   <BookmarkIcon size={20} className="text-white" />
                 </button>
               </div>
@@ -191,9 +252,17 @@ export default function BlogsPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             {/* Categories */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 sticky top-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-amber-400 rounded-full" />
+            <div className={`rounded-2xl shadow-lg p-6 mb-6 sticky top-6 transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-gray-800 border border-gray-700" 
+                : "bg-white"
+            }`}>
+              <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 transition-colors duration-500 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
+                <span className={`w-2 h-2 rounded-full transition-colors duration-500 ${
+                  isDarkMode ? "bg-amber-400" : "bg-amber-400"
+                }`} />
                 Categories
               </h3>
               <div className="space-y-2">
@@ -203,15 +272,23 @@ export default function BlogsPage() {
                     onClick={() => setActiveCategory(category)}
                     className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg transition-all duration-300 ${
                       activeCategory === category
-                        ? 'bg-amber-50 text-amber-600 font-semibold'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? isDarkMode 
+                          ? 'bg-amber-400/10 text-amber-400 font-semibold' 
+                          : 'bg-amber-50 text-amber-600 font-semibold'
+                        : isDarkMode
+                          ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     <span>{category}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    <span className={`text-xs px-2 py-0.5 rounded-full transition-all duration-300 ${
                       activeCategory === category
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-gray-100 text-gray-500'
+                        ? isDarkMode
+                          ? 'bg-amber-400/20 text-amber-300'
+                          : 'bg-amber-100 text-amber-700'
+                        : isDarkMode
+                          ? 'bg-gray-700 text-gray-400'
+                          : 'bg-gray-100 text-gray-500'
                     }`}>
                       {getCategoryCount(category)}
                     </span>
@@ -221,25 +298,41 @@ export default function BlogsPage() {
             </div>
 
             {/* Trending Posts */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div className={`rounded-2xl shadow-lg p-6 transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-gray-800 border border-gray-700" 
+                : "bg-white"
+            }`}>
+              <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 transition-colors duration-500 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
                 <TrendingUpIcon size={18} className="text-amber-500" />
                 Trending Now
               </h3>
               <div className="space-y-4">
                 {blogs.slice(0, 4).map((blog) => (
                   <div key={blog.id} className="flex items-center gap-3 group">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-amber-600 font-bold text-sm">#{blog.id}</span>
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                      isDarkMode 
+                        ? "bg-gradient-to-br from-amber-900/20 to-orange-900/20" 
+                        : "bg-gradient-to-br from-amber-100 to-orange-100"
+                    }`}>
+                      <span className={`font-bold text-sm transition-colors duration-500 ${
+                        isDarkMode ? "text-amber-400" : "text-amber-600"
+                      }`}>#{blog.id}</span>
                     </div>
                     <div>
                       <Link 
                         href={`/blogs/${blog.id}`}
-                        className="text-gray-900 font-medium text-sm line-clamp-1 group-hover:text-amber-600 transition-colors duration-300"
+                        className={`text-sm line-clamp-1 group-hover:text-amber-500 transition-colors duration-300 ${
+                          isDarkMode ? "text-gray-300" : "text-gray-900"
+                        }`}
                       >
                         {blog.title}
                       </Link>
-                      <div className="text-gray-400 text-xs">{blog.date}</div>
+                      <div className={`text-xs transition-colors duration-500 ${
+                        isDarkMode ? "text-gray-500" : "text-gray-400"
+                      }`}>{blog.date}</div>
                     </div>
                   </div>
                 ))}
@@ -252,10 +345,14 @@ export default function BlogsPage() {
             {/* Header with Sort Options */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Latest <span className="text-amber-600">Articles</span>
+                <h2 className={`text-2xl font-bold transition-colors duration-500 ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}>
+                  Latest <span className="text-amber-500">Articles</span>
                 </h2>
-                <p className="text-gray-600 mt-1">
+                <p className={`mt-1 transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}>
                   {filteredBlogs.length} articles found
                 </p>
               </div>
@@ -264,13 +361,21 @@ export default function BlogsPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 text-sm"
+                  className={`px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-amber-200 text-sm transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-500/20" 
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                  }`}
                 >
                   <option value="latest">Latest First</option>
                   <option value="popular">Most Popular</option>
                   <option value="trending">Trending</option>
                 </select>
-                <button className="p-2 bg-white rounded-lg border border-gray-300 hover:border-amber-400 hover:text-amber-600 transition-colors duration-300">
+                <button className={`p-2 rounded-lg border transition-colors duration-300 hover:text-amber-500 ${
+                  isDarkMode 
+                    ? "bg-gray-800 border-gray-700 text-gray-400 hover:border-amber-500" 
+                    : "bg-white border-gray-300 text-gray-700 hover:border-amber-400"
+                }`}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="7" height="7" />
                     <rect x="14" y="3" width="7" height="7" />
@@ -278,7 +383,11 @@ export default function BlogsPage() {
                     <rect x="14" y="14" width="7" height="7" />
                   </svg>
                 </button>
-                <button className="p-2 bg-white rounded-lg border border-gray-300 hover:border-amber-400 hover:text-amber-600 transition-colors duration-300">
+                <button className={`p-2 rounded-lg border transition-colors duration-300 hover:text-amber-500 ${
+                  isDarkMode 
+                    ? "bg-gray-800 border-gray-700 text-gray-400 hover:border-amber-500" 
+                    : "bg-white border-gray-300 text-gray-700 hover:border-amber-400"
+                }`}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="8" y1="6" x2="21" y2="6" />
                     <line x1="8" y1="12" x2="21" y2="12" />
@@ -295,17 +404,25 @@ export default function BlogsPage() {
             {filteredBlogs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredBlogs.map((blog) => (
-                  <BlogCard key={blog.id} blog={blog} />
+                  <BlogCard key={blog.id} blog={blog} isDarkMode={isDarkMode} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-20">
                 <div className="max-w-md mx-auto">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
-                    <SearchIcon size={32} className="text-amber-600" />
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gradient-to-br from-amber-900/20 to-orange-900/20" 
+                      : "bg-gradient-to-br from-amber-100 to-orange-100"
+                  }`}>
+                    <SearchIcon size={32} className="text-amber-500" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No Articles Found</h3>
-                  <p className="text-gray-600 mb-8">
+                  <h3 className={`text-2xl font-bold mb-3 transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>No Articles Found</h3>
+                  <p className={`mb-8 transition-colors duration-500 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>
                     We couldn't find any articles matching your criteria. Try a different search or category.
                   </p>
                   <button
@@ -324,7 +441,11 @@ export default function BlogsPage() {
             {/* Load More */}
             {filteredBlogs.length > 0 && (
               <div className="mt-12 text-center">
-                <button className="border-2 border-gray-300 text-gray-700 font-semibold px-8 py-3 rounded-xl hover:border-amber-400 hover:text-amber-600 transition-all duration-300">
+                <button className={`border-2 font-semibold px-8 py-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode 
+                    ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400" 
+                    : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                }`}>
                   Load More Articles
                 </button>
               </div>
@@ -334,12 +455,18 @@ export default function BlogsPage() {
       </div>
 
       {/* Newsletter CTA */}
-      <div className="bg-gradient-to-r from-gray-900 to-blue-900 py-16">
+      <div className={`py-16 transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gradient-to-r from-gray-800 to-gray-900" 
+          : "bg-gradient-to-r from-gray-900 to-blue-900"
+      }`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
             Get Weekly <span className="text-amber-400">Market Updates</span>
           </h2>
-          <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
+          <p className={`text-lg mb-10 max-w-2xl mx-auto transition-colors duration-500 ${
+            isDarkMode ? "text-gray-300" : "text-gray-300"
+          }`}>
             Subscribe to our newsletter and receive expert insights, market trends, and investment opportunities directly in your inbox.
           </p>
           
@@ -355,7 +482,11 @@ export default function BlogsPage() {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full px-6 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:border-amber-400"
+                  className={`w-full px-6 py-4 rounded-xl backdrop-blur-sm text-white placeholder-gray-400 border focus:outline-none transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-white/5 border-white/10 focus:border-amber-400" 
+                      : "bg-white/10 border-white/20 focus:border-amber-400"
+                  }`}
                   required
                 />
               </div>
@@ -366,7 +497,9 @@ export default function BlogsPage() {
                 Subscribe Now
               </button>
             </form>
-            <p className="text-gray-400 text-sm mt-4">
+            <p className={`text-sm mt-4 transition-colors duration-500 ${
+              isDarkMode ? "text-gray-400" : "text-gray-400"
+            }`}>
               By subscribing, you agree to our Privacy Policy. No spam, unsubscribe anytime.
             </p>
           </div>
