@@ -23,6 +23,7 @@ import {
   HeartIcon,
   CheckIcon,
 } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 // Property images based on ID
 const getPropertyImages = (id: number) => [
@@ -34,24 +35,51 @@ const getPropertyImages = (id: number) => [
 ];
 
 export default function PropertyDetailPage() {
+  const { isDarkMode } = useTheme();
   const { id } = useParams<{ id: string }>();
   const property = properties.find((p) => p.id === Number(id));
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [liked, setLiked] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Get status color
+  const getStatusColor = (status: string, darkMode = false) => {
+    const colors: Record<string, { light: string; dark: string }> = {
+      'For Sale': { light: 'bg-gradient-to-r from-emerald-500 to-green-600', dark: 'bg-gradient-to-r from-emerald-400 to-green-500' },
+      'For Rent': { light: 'bg-gradient-to-r from-blue-500 to-cyan-600', dark: 'bg-gradient-to-r from-blue-400 to-cyan-500' },
+      'Sold': { light: 'bg-gradient-to-r from-gray-500 to-gray-700', dark: 'bg-gradient-to-r from-gray-400 to-gray-600' },
+      'Featured': { light: 'bg-gradient-to-r from-amber-500 to-orange-600', dark: 'bg-gradient-to-r from-amber-400 to-orange-500' },
+      'Hot': { light: 'bg-gradient-to-r from-pink-500 to-rose-600', dark: 'bg-gradient-to-r from-pink-400 to-rose-500' },
+      'New': { light: 'bg-gradient-to-r from-purple-500 to-indigo-600', dark: 'bg-gradient-to-r from-purple-400 to-indigo-500' },
+    };
+    const color = colors[status] || colors['Sold'];
+    return darkMode ? color.dark : color.light;
+  };
+
   // 404 fallback
   if (!property) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex flex-col items-center justify-center px-5 text-center">
+      <div className={`min-h-screen flex flex-col items-center justify-center px-5 text-center transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+          : "bg-gradient-to-b from-white to-gray-50"
+      }`}>
         <div className="max-w-md">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
+          <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all duration-500 ${
+            isDarkMode 
+              ? "bg-gradient-to-br from-amber-900/20 to-orange-900/20" 
+              : "bg-gradient-to-br from-amber-100 to-orange-100"
+          }`}>
             <span className="text-3xl">🏡</span>
           </div>
-          <h1 className="text-gray-900 text-4xl font-bold mb-3">
+          <h1 className={`text-4xl font-bold mb-3 transition-colors duration-500 ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}>
             Property Not Found
           </h1>
-          <p className="text-gray-600 text-lg mb-8">
+          <p className={`text-lg mb-8 transition-colors duration-500 ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}>
             The listing you're looking for doesn't exist or has been removed.
           </p>
           <Link
@@ -69,21 +97,12 @@ export default function PropertyDetailPage() {
   const propertyImages = getPropertyImages(property.id);
   const related = properties.filter((p) => p.category === property.category && p.id !== property.id).slice(0, 3);
 
-  // Get status color
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'For Sale': 'bg-gradient-to-r from-emerald-500 to-green-600',
-      'For Rent': 'bg-gradient-to-r from-blue-500 to-cyan-600',
-      'Sold': 'bg-gradient-to-r from-gray-500 to-gray-700',
-      'Featured': 'bg-gradient-to-r from-amber-500 to-orange-600',
-      'Hot': 'bg-gradient-to-r from-pink-500 to-rose-600',
-      'New': 'bg-gradient-to-r from-purple-500 to-indigo-600',
-    };
-    return colors[status] || 'bg-gradient-to-r from-gray-500 to-gray-700';
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className={`min-h-screen transition-all duration-500 ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+        : "bg-gradient-to-b from-white to-gray-50"
+    }`}>
       {/* Hero Image Gallery */}
       <section className="relative">
         <div className="relative h-[500px] lg:h-[600px] overflow-hidden">
@@ -93,20 +112,32 @@ export default function PropertyDetailPage() {
               backgroundImage: `url(${propertyImages[currentImageIndex]})`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+          <div className={`absolute inset-0 transition-all duration-500 ${
+            isDarkMode 
+              ? "bg-gradient-to-t from-black/70 via-black/40 to-transparent" 
+              : "bg-gradient-to-t from-black/60 via-black/30 to-transparent"
+          }`} />
           
           {/* Navigation Arrows */}
           <button
             onClick={() => setCurrentImageIndex((prev) => (prev - 1 + propertyImages.length) % propertyImages.length)}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all duration-300 z-10"
+            className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-2 rounded-full shadow-lg transition-all duration-300 z-10 ${
+              isDarkMode 
+                ? "bg-gray-800/80 hover:bg-gray-800" 
+                : "bg-white/80 hover:bg-white"
+            }`}
           >
-            <ChevronLeftIcon size={24} className="text-gray-800" />
+            <ChevronLeftIcon size={24} className={isDarkMode ? "text-white" : "text-gray-800"} />
           </button>
           <button
             onClick={() => setCurrentImageIndex((prev) => (prev + 1) % propertyImages.length)}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all duration-300 z-10"
+            className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-full shadow-lg transition-all duration-300 z-10 ${
+              isDarkMode 
+                ? "bg-gray-800/80 hover:bg-gray-800" 
+                : "bg-white/80 hover:bg-white"
+            }`}
           >
-            <ChevronRightIcon size={24} className="text-gray-800" />
+            <ChevronRightIcon size={24} className={isDarkMode ? "text-white" : "text-gray-800"} />
           </button>
 
           {/* Top Bar */}
@@ -115,7 +146,11 @@ export default function PropertyDetailPage() {
               <div className="flex items-center justify-between">
                 <Link
                   href="/properties"
-                  className="flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors duration-300"
+                  className={`flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-lg transition-colors duration-300 ${
+                    isDarkMode 
+                      ? "bg-white/10 text-white hover:bg-white/20" 
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
                 >
                   <ChevronLeftIcon size={20} />
                   Back to Properties
@@ -123,11 +158,19 @@ export default function PropertyDetailPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setLiked(!liked)}
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors duration-300"
+                    className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors duration-300 ${
+                      isDarkMode 
+                        ? "bg-white/10 hover:bg-white/20" 
+                        : "bg-white/10 hover:bg-white/20"
+                    }`}
                   >
                     <HeartIcon size={20} className={liked ? "fill-red-500 text-red-500" : "text-white"} />
                   </button>
-                  <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors duration-300">
+                  <button className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode 
+                      ? "bg-white/10 hover:bg-white/20" 
+                      : "bg-white/10 hover:bg-white/20"
+                  }`}>
                     <ShareIcon size={20} className="text-white" />
                   </button>
                 </div>
@@ -142,14 +185,16 @@ export default function PropertyDetailPage() {
                 <div>
                   {/* Status & Category */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className={`text-white text-xs font-bold px-3 py-1.5 rounded-full ${getStatusColor(property.status)}`}>
+                    <span className={`text-white text-xs font-bold px-3 py-1.5 rounded-full ${getStatusColor(property.status, isDarkMode)}`}>
                       {property.status}
                     </span>
                     <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full">
                       {property.category}
                     </span>
                     {property.featured && (
-                      <span className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                      <span className={`bg-gradient-to-r text-white text-xs font-bold px-3 py-1.5 rounded-full ${
+                        isDarkMode ? 'from-pink-400 to-purple-400' : 'from-pink-500 to-purple-500'
+                      }`}>
                         FEATURED
                       </span>
                     )}
@@ -225,15 +270,19 @@ export default function PropertyDetailPage() {
           {/* Left Column - Property Details */}
           <div className="lg:col-span-2">
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 mb-8">
+            <div className={`flex border-b mb-8 transition-colors duration-500 ${
+              isDarkMode ? "border-gray-700" : "border-gray-200"
+            }`}>
               {['overview', 'features', 'location', 'schedule'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-6 py-3 font-semibold text-sm capitalize transition-colors duration-300 ${
                     activeTab === tab
-                      ? 'text-amber-600 border-b-2 border-amber-500'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? `text-amber-500 border-b-2 border-amber-500`
+                      : isDarkMode 
+                        ? 'text-gray-400 hover:text-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {tab === 'overview' ? 'Property Overview' : 
@@ -250,52 +299,53 @@ export default function PropertyDetailPage() {
               {activeTab === 'overview' && (
                 <>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Property Description</h2>
-                    <p className="text-gray-600 leading-relaxed text-lg">
+                    <h2 className={`text-2xl font-bold mb-4 transition-colors duration-500 ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}>Property Description</h2>
+                    <p className={`leading-relaxed text-lg transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>
                       {property.detailDescription || `Experience luxury living in this stunning ${property.category.toLowerCase()}. ${property.description}`}
                     </p>
                   </div>
 
                   {/* Key Features */}
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Key Features</h3>
+                    <h3 className={`text-xl font-bold mb-4 transition-colors duration-500 ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}>Key Features</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-                          <AreaIcon size={24} className="text-amber-600" />
+                      {[
+                        { icon: <AreaIcon size={24} />, label: "Living Area", value: `${property.sqft?.toLocaleString()} sq ft` },
+                        { icon: <CalendarIcon size={24} />, label: "Year Built", value: property.yearBuilt },
+                        { icon: <UsersIcon size={24} />, label: "Family Size", value: `${property.bedrooms} bedrooms` },
+                        { icon: <ParkingIcon size={24} />, label: "Parking Space", value: `${property.parking || 2} cars` },
+                      ].map((feature, index) => (
+                        <div 
+                          key={index}
+                          className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
+                            isDarkMode 
+                              ? "bg-gray-800 hover:bg-gray-700" 
+                              : "bg-gray-50 hover:bg-amber-50"
+                          }`}
+                        >
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors duration-500 ${
+                            isDarkMode 
+                              ? "bg-amber-900/30" 
+                              : "bg-amber-50"
+                          }`}>
+                            <div className="text-amber-500">{feature.icon}</div>
+                          </div>
+                          <div>
+                            <div className={`font-semibold transition-colors duration-500 ${
+                              isDarkMode ? "text-white" : "text-gray-900"
+                            }`}>{feature.value}</div>
+                            <div className={`text-sm transition-colors duration-500 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-500"
+                            }`}>{feature.label}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{property.sqft?.toLocaleString()} sq ft</div>
-                          <div className="text-gray-500 text-sm">Living Area</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-                          <CalendarIcon size={24} className="text-amber-600" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{property.yearBuilt}</div>
-                          <div className="text-gray-500 text-sm">Year Built</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-                          <UsersIcon size={24} className="text-amber-600" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{property.bedrooms} bedrooms</div>
-                          <div className="text-gray-500 text-sm">Family Size</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-                          <ParkingIcon size={24} className="text-amber-600" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{property.parking || 2} cars</div>
-                          <div className="text-gray-500 text-sm">Parking Space</div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </>
@@ -304,14 +354,29 @@ export default function PropertyDetailPage() {
               {/* Features Tab */}
               {activeTab === 'features' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Features & Amenities</h2>
+                  <h2 className={`text-2xl font-bold mb-6 transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>Features & Amenities</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {property.features?.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-amber-50 transition-colors duration-300">
-                        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                          <CheckIcon size={16} className="text-amber-600" />
+                      <div 
+                        key={index} 
+                        className={`flex items-center gap-3 p-4 rounded-xl transition-colors duration-300 ${
+                          isDarkMode 
+                            ? "bg-gray-800 hover:bg-gray-700" 
+                            : "bg-gray-50 hover:bg-amber-50"
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-500 ${
+                          isDarkMode 
+                            ? "bg-amber-900/30" 
+                            : "bg-amber-100"
+                        }`}>
+                          <CheckIcon size={16} className="text-amber-500" />
                         </div>
-                        <span className="text-gray-700 font-medium">{feature}</span>
+                        <span className={`font-medium transition-colors duration-500 ${
+                          isDarkMode ? "text-gray-300" : "text-gray-700"
+                        }`}>{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -321,8 +386,12 @@ export default function PropertyDetailPage() {
               {/* Location Tab */}
               {activeTab === 'location' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Location & Neighborhood</h2>
-                  <p className="text-gray-600 mb-6">
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>Location & Neighborhood</h2>
+                  <p className={`mb-6 transition-colors duration-500 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
                     This property is situated in one of the most desirable neighborhoods, offering easy access to amenities, schools, and entertainment.
                   </p>
                   <div className="h-64 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -338,43 +407,75 @@ export default function PropertyDetailPage() {
               {/* Schedule Tab */}
               {activeTab === 'schedule' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Schedule a Private Tour</h2>
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-8">
+                  <h2 className={`text-2xl font-bold mb-6 transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>Schedule a Private Tour</h2>
+                  <div className={`rounded-2xl p-8 transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gradient-to-r from-gray-800 to-gray-700" 
+                      : "bg-gradient-to-r from-amber-50 to-orange-50"
+                  }`}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">Available Time Slots</h3>
+                        <h3 className={`text-xl font-bold mb-4 transition-colors duration-500 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}>Available Time Slots</h3>
                         <div className="space-y-3">
                           {['Monday 10 AM', 'Tuesday 2 PM', 'Wednesday 11 AM', 'Thursday 3 PM', 'Friday 1 PM'].map((slot, i) => (
                             <button
                               key={i}
-                              className="w-full text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-amber-400 hover:bg-amber-50 transition-all duration-300"
+                              className={`w-full text-left p-3 rounded-lg border transition-all duration-300 ${
+                                isDarkMode 
+                                  ? "bg-gray-700 border-gray-600 hover:border-amber-400 hover:bg-gray-600" 
+                                  : "bg-white border-gray-200 hover:border-amber-400 hover:bg-amber-50"
+                              }`}
                             >
-                              <div className="font-medium text-gray-900">{slot}</div>
-                              <div className="text-gray-500 text-sm">Available</div>
+                              <div className={`font-medium transition-colors duration-300 ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}>{slot}</div>
+                              <div className={`text-sm transition-colors duration-300 ${
+                                isDarkMode ? "text-gray-400" : "text-gray-500"
+                              }`}>Available</div>
                             </button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h3>
-                        <p className="text-gray-600 mb-6">
+                        <h3 className={`text-xl font-bold mb-4 transition-colors duration-500 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}>Contact Information</h3>
+                        <p className={`mb-6 transition-colors duration-500 ${
+                          isDarkMode ? "text-gray-300" : "text-gray-600"
+                        }`}>
                           Fill out the form below and our agent will contact you to confirm your tour.
                         </p>
                         <form className="space-y-4">
                           <input
                             type="text"
                             placeholder="Your Name"
-                            className="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none"
+                            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
+                              isDarkMode 
+                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20" 
+                                : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                            }`}
                           />
                           <input
                             type="email"
                             placeholder="Email Address"
-                            className="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none"
+                            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
+                              isDarkMode 
+                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20" 
+                                : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                            }`}
                           />
                           <input
                             type="tel"
                             placeholder="Phone Number"
-                            className="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none"
+                            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
+                              isDarkMode 
+                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20" 
+                                : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                            }`}
                           />
                           <button
                             type="submit"
@@ -394,8 +495,14 @@ export default function PropertyDetailPage() {
           {/* Right Column - Agent Card & Stats */}
           <div className="space-y-8">
             {/* Agent Card */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 sticky top-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Contact Agent</h3>
+            <div className={`rounded-2xl shadow-xl p-6 border sticky top-6 transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-gray-800 border-gray-700" 
+                : "bg-white border-gray-100"
+            }`}>
+              <h3 className={`text-xl font-bold mb-6 transition-colors duration-500 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>Contact Agent</h3>
               
               {/* Agent Info */}
               <div className="flex items-center gap-4 mb-6">
@@ -408,13 +515,17 @@ export default function PropertyDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{property.agent.name}</h4>
-                  <p className="text-amber-600 font-medium">Lead Property Agent</p>
+                  <h4 className={`text-lg font-bold transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>{property.agent.name}</h4>
+                  <p className="text-amber-500 font-medium">Lead Property Agent</p>
                   <div className="flex items-center gap-1 mt-1">
                     {[...Array(5)].map((_, i) => (
                       <StarIcon key={i} size={14} className="fill-amber-400 text-amber-400" />
                     ))}
-                    <span className="text-gray-500 text-sm ml-1">4.9 (42 reviews)</span>
+                    <span className={`text-sm ml-1 transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}>4.9 (42 reviews)</span>
                   </div>
                 </div>
               </div>
@@ -423,26 +534,50 @@ export default function PropertyDetailPage() {
               <div className="space-y-4 mb-8">
                 <a
                   href={`tel:${property.agent.phone.replace(/\D/g, "")}`}
-                  className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-amber-50 transition-colors duration-300 group"
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-colors duration-300 group ${
+                    isDarkMode 
+                      ? "bg-gray-700/50 hover:bg-gray-700" 
+                      : "bg-gray-50 hover:bg-amber-50"
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
-                    <PhoneIcon size={18} className="text-amber-600" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-500 ${
+                    isDarkMode 
+                      ? "bg-gray-800" 
+                      : "bg-white"
+                  }`}>
+                    <PhoneIcon size={18} className="text-amber-500" />
                   </div>
                   <div>
-                    <div className="text-gray-500 text-sm">Call Agent</div>
-                    <div className="text-gray-900 font-semibold group-hover:text-amber-600">{property.agent.phone}</div>
+                    <div className={`text-sm transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}>Call Agent</div>
+                    <div className={`font-semibold transition-colors duration-300 group-hover:text-amber-500 ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}>{property.agent.phone}</div>
                   </div>
                 </a>
                 <a
                   href={`mailto:${property.agent.email}`}
-                  className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-amber-50 transition-colors duration-300 group"
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-colors duration-300 group ${
+                    isDarkMode 
+                      ? "bg-gray-700/50 hover:bg-gray-700" 
+                      : "bg-gray-50 hover:bg-amber-50"
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
-                    <MailIcon size={18} className="text-amber-600" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-500 ${
+                    isDarkMode 
+                      ? "bg-gray-800" 
+                      : "bg-white"
+                  }`}>
+                    <MailIcon size={18} className="text-amber-500" />
                   </div>
                   <div>
-                    <div className="text-gray-500 text-sm">Email Agent</div>
-                    <div className="text-gray-900 font-semibold group-hover:text-amber-600">{property.agent.email}</div>
+                    <div className={`text-sm transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}>Email Agent</div>
+                    <div className={`font-semibold transition-colors duration-300 group-hover:text-amber-500 ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}>{property.agent.email}</div>
                   </div>
                 </a>
               </div>
@@ -457,14 +592,22 @@ export default function PropertyDetailPage() {
               </Link>
 
               {/* Response Time */}
-              <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-                <div className="text-gray-500 text-sm">Average response time</div>
-                <div className="text-amber-600 font-bold text-lg">Under 1 hour</div>
+              <div className={`mt-6 pt-6 border-t text-center transition-all duration-500 ${
+                isDarkMode ? "border-gray-700" : "border-gray-100"
+              }`}>
+                <div className={`text-sm transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-500"
+                }`}>Average response time</div>
+                <div className="text-amber-500 font-bold text-lg">Under 1 hour</div>
               </div>
             </div>
 
             {/* Property Stats */}
-            <div className="bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-6 text-white">
+            <div className={`rounded-2xl p-6 text-white transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-gradient-to-r from-gray-800 to-gray-900" 
+                : "bg-gradient-to-r from-gray-900 to-blue-900"
+            }`}>
               <h3 className="text-lg font-bold mb-4">Property Statistics</h3>
               <div className="space-y-4">
                 <div>
@@ -502,24 +645,36 @@ export default function PropertyDetailPage() {
 
       {/* Related Properties */}
       {related.length > 0 && (
-        <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+        <section className={`py-20 transition-all duration-500 ${
+          isDarkMode 
+            ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+            : "bg-gradient-to-b from-white to-gray-50"
+        }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-                <span className="w-8 h-0.5 bg-amber-400" />
+              <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 transition-colors duration-500 ${
+                isDarkMode ? "text-amber-400" : "text-amber-600"
+              }`}>
+                <span className={`w-8 h-0.5 transition-colors duration-500 ${
+                  isDarkMode ? "bg-amber-400" : "bg-amber-400"
+                }`} />
                 SIMILAR PROPERTIES
               </span>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className={`text-3xl lg:text-4xl font-bold mb-4 transition-colors duration-500 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
                 You May Also <span className="text-amber-500">Like</span>
               </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              <p className={`text-lg max-w-2xl mx-auto transition-colors duration-500 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}>
                 Explore other properties in the same category that match your preferences.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {related.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard key={property.id} property={property} isDarkMode={isDarkMode} />
               ))}
             </div>
 
