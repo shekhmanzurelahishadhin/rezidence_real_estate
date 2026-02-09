@@ -21,6 +21,7 @@ import {
   GlobeIcon,
   CheckCircleIcon,
 } from "@/assets/icons";
+import { useTheme } from "@/app/ThemeProvider";
 
 // Unsplash images
 const IMAGES = {
@@ -46,25 +47,29 @@ const values = [
     title: "Integrity First",
     description: "We believe in complete transparency and honesty in all our dealings.",
     icon: <ShieldCheckIcon size={28} className="text-amber-500" />,
-    color: "from-amber-50 to-orange-50",
+    lightColor: "from-amber-50 to-orange-50",
+    darkColor: "from-amber-900/20 to-orange-900/20",
   },
   {
     title: "Client Focused",
     description: "Your goals are our priority. We tailor our services to your unique needs.",
     icon: <HeartIcon size={28} className="text-amber-500" />,
-    color: "from-blue-50 to-cyan-50",
+    lightColor: "from-blue-50 to-cyan-50",
+    darkColor: "from-blue-900/20 to-cyan-900/20",
   },
   {
     title: "Market Excellence",
     description: "Deep market knowledge and cutting-edge insights for optimal results.",
     icon: <TargetIcon size={28} className="text-amber-500" />,
-    color: "from-green-50 to-emerald-50",
+    lightColor: "from-green-50 to-emerald-50",
+    darkColor: "from-green-900/20 to-emerald-900/20",
   },
   {
     title: "Global Reach",
     description: "Connecting clients with opportunities across international markets.",
     icon: <GlobeIcon size={28} className="text-amber-500" />,
-    color: "from-purple-50 to-violet-50",
+    lightColor: "from-purple-50 to-violet-50",
+    darkColor: "from-purple-900/20 to-violet-900/20",
   },
 ];
 
@@ -108,6 +113,7 @@ const timeline = [
 ];
 
 export default function AboutPage() {
+  const { isDarkMode } = useTheme();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -118,16 +124,27 @@ export default function AboutPage() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] overflow-hidden bg-gradient-to-br from-gray-900 via-gray-900 to-blue-950">
+      <section className="relative min-h-[70vh] overflow-hidden transition-all duration-500"
+        style={{
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, #111827 0%, #1e293b 50%, #0f172a 100%)'
+            : 'linear-gradient(135deg, #111827 0%, #111827 50%, #1e3a8a 100%)'
+        }}
+      >
         <div
-          className="absolute inset-0 opacity-20"
+          className={`absolute inset-0 transition-all duration-500`}
           style={{
             backgroundImage: `url(${IMAGES.hero})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            opacity: isDarkMode ? 0.15 : 0.2
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+        <div className={`absolute inset-0 transition-all duration-500 ${
+          isDarkMode 
+            ? "bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent" 
+            : "bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"
+        }`} />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
           <div
@@ -138,9 +155,17 @@ export default function AboutPage() {
             }}
           >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-white/20">
-              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-              <span className="text-amber-400 text-sm font-medium tracking-wide">
+            <div className={`inline-flex items-center gap-2 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border transition-all duration-500 ${
+              isDarkMode 
+                ? "bg-white/5 border-white/10" 
+                : "bg-white/10 border-white/20"
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse transition-all duration-500 ${
+                isDarkMode ? "bg-amber-400" : "bg-amber-400"
+              }`} />
+              <span className={`text-sm font-medium tracking-wide transition-colors duration-500 ${
+                isDarkMode ? "text-amber-300" : "text-amber-400"
+              }`}>
                 ABOUT US
               </span>
             </div>
@@ -152,7 +177,9 @@ export default function AboutPage() {
               </span>
             </h1>
 
-            <p className="text-gray-300 text-xl leading-relaxed max-w-3xl mb-8">
+            <p className={`text-xl leading-relaxed max-w-3xl mb-8 transition-colors duration-500 ${
+              isDarkMode ? "text-gray-300" : "text-gray-300"
+            }`}>
               For over 15 years, LuxeProperties has been the trusted name in luxury real estate. 
               We don't just sell properties; we craft exceptional living experiences and build lasting relationships.
             </p>
@@ -170,12 +197,18 @@ export default function AboutPage() {
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
+                    <div className={`backdrop-blur-sm p-3 rounded-xl border transition-all duration-500 ${
+                      isDarkMode 
+                        ? "bg-white/5 border-white/10" 
+                        : "bg-white/10 border-white/20"
+                    }`}>
                       {stat.icon}
                     </div>
                     <div>
                       <div className="text-3xl font-bold text-white">{stat.value}</div>
-                      <div className="text-gray-300 text-sm">{stat.label}</div>
+                      <div className={`text-sm transition-colors duration-500 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-300"
+                      }`}>{stat.label}</div>
                     </div>
                   </div>
                 </div>
@@ -186,24 +219,38 @@ export default function AboutPage() {
       </section>
 
       {/* Our Story */}
-      <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+      <section className={`py-20 transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+          : "bg-gradient-to-b from-white to-gray-50"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}
             <div>
-              <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-                <span className="w-8 h-0.5 bg-amber-400" />
+              <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 transition-colors duration-500 ${
+                isDarkMode ? "text-amber-400" : "text-amber-600"
+              }`}>
+                <span className={`w-8 h-0.5 transition-colors duration-500 ${
+                  isDarkMode ? "bg-amber-400" : "bg-amber-400"
+                }`} />
                 OUR STORY
               </span>
-              <h2 className="text-gray-900 text-4xl lg:text-5xl font-bold mb-6">
+              <h2 className={`text-4xl lg:text-5xl font-bold mb-6 transition-colors duration-500 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
                 Redefining Luxury <span className="text-amber-500">Real Estate</span>
               </h2>
-              <p className="text-gray-600 text-lg mb-6">
+              <p className={`text-lg mb-6 transition-colors duration-500 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}>
                 Founded in 2010 by Michael Rodriguez, LuxeProperties began as a boutique agency 
                 with a vision to transform the luxury real estate experience. What started as a 
                 single office in Beverly Hills has grown into a globally recognized brand.
               </p>
-              <p className="text-gray-600 text-lg mb-8">
+              <p className={`text-lg mb-8 transition-colors duration-500 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}>
                 Our success is built on a foundation of trust, expertise, and an unwavering 
                 commitment to our clients' success. We've consistently delivered exceptional 
                 results by combining traditional values with innovative approaches.
@@ -219,7 +266,11 @@ export default function AboutPage() {
                 </Link>
                 <Link
                   href="/properties"
-                  className="border-2 border-gray-300 text-gray-700 font-semibold px-8 py-3 rounded-xl hover:border-amber-400 hover:text-amber-600 transition-all duration-300 text-center"
+                  className={`border-2 font-semibold px-8 py-3 rounded-xl transition-all duration-300 text-center ${
+                    isDarkMode 
+                      ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400" 
+                      : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                  }`}
                 >
                   View Properties
                 </Link>
@@ -237,18 +288,30 @@ export default function AboutPage() {
                     backgroundPosition: 'center',
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
+                <div className={`absolute inset-0 transition-all duration-500 ${
+                  isDarkMode 
+                    ? "bg-gradient-to-t from-gray-900/50 to-transparent" 
+                    : "bg-gradient-to-t from-gray-900/40 to-transparent"
+                }`} />
                 
                 {/* Floating Card */}
                 <div className="absolute bottom-8 left-8 right-8">
-                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
+                  <div className={`backdrop-blur-sm rounded-2xl p-6 shadow-xl transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gray-800/90 border border-gray-700" 
+                      : "bg-white/95"
+                  }`}>
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                         <AwardIcon size={28} color="white" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-gray-900">Award Winning</div>
-                        <div className="text-gray-600">Best Luxury Real Estate Agency 2023</div>
+                        <div className={`text-2xl font-bold transition-colors duration-500 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}>Award Winning</div>
+                        <div className={`transition-colors duration-500 ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}>Best Luxury Real Estate Agency 2023</div>
                       </div>
                     </div>
                   </div>
@@ -256,24 +319,40 @@ export default function AboutPage() {
               </div>
 
               {/* Background Element */}
-              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-gradient-to-br from-amber-400/20 to-orange-500/20 rounded-full blur-3xl -z-10" />
+              <div className={`absolute -bottom-6 -right-6 w-48 h-48 rounded-full blur-3xl -z-10 transition-all duration-500 ${
+                isDarkMode 
+                  ? "bg-gradient-to-br from-amber-400/10 to-orange-500/10" 
+                  : "bg-gradient-to-br from-amber-400/20 to-orange-500/20"
+              }`} />
             </div>
           </div>
         </div>
       </section>
 
       {/* Our Values */}
-      <section className="py-20 from-gray-50 to-white">
+      <section className={`py-20 transition-all duration-500 ${
+        isDarkMode 
+          ? "from-gray-800 to-gray-900" 
+          : "from-gray-50 to-white"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-              <span className="w-8 h-0.5 bg-amber-400" />
+            <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 transition-colors duration-500 ${
+              isDarkMode ? "text-amber-400" : "text-amber-600"
+            }`}>
+              <span className={`w-8 h-0.5 transition-colors duration-500 ${
+                isDarkMode ? "bg-amber-400" : "bg-amber-400"
+              }`} />
               OUR VALUES
             </span>
-            <h2 className="text-gray-900 text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className={`text-4xl lg:text-5xl font-bold mb-6 transition-colors duration-500 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}>
               What <span className="text-amber-500">Drives Us</span>
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className={`text-lg transition-colors duration-500 ${
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            }`}>
               The principles that guide every decision and action at LuxeProperties
             </p>
           </div>
@@ -282,21 +361,33 @@ export default function AboutPage() {
             {values.map((value, index) => (
               <div
                 key={value.title}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-2 group"
+                className={`rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-2 group ${
+                  isDarkMode 
+                    ? "bg-gray-800 border border-gray-700 hover:border-gray-600" 
+                    : "bg-white"
+                }`}
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? "translateY(0)" : "translateY(20px)",
                   transitionDelay: `${index * 100}ms`,
                 }}
               >
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${value.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${
+                  isDarkMode ? value.darkColor : value.lightColor
+                } flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   {value.icon}
                 </div>
-                <h3 className="text-gray-900 text-xl font-bold mb-3">{value.title}</h3>
-                <p className="text-gray-600">{value.description}</p>
+                <h3 className={`text-xl font-bold mb-3 transition-colors duration-500 ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}>{value.title}</h3>
+                <p className={`transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-600"
+                }`}>{value.description}</p>
                 
                 {/* Hover line */}
-                <div className="mt-6 pt-4 border-t border-gray-100 relative">
+                <div className={`mt-6 pt-4 border-t relative transition-colors duration-500 ${
+                  isDarkMode ? "border-gray-700" : "border-gray-100"
+                }`}>
                   <div className="absolute -top-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-500" />
                 </div>
               </div>
@@ -306,26 +397,42 @@ export default function AboutPage() {
       </section>
 
       {/* Team */}
-      <section className="bg-gradient-to-b from-gray-50 to-white py-20">
+      <section className={`py-20 transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+          : "bg-gradient-to-b from-gray-50 to-white"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-flex items-center gap-2 text-amber-600 text-sm font-semibold tracking-widest uppercase mb-4">
-              <span className="w-8 h-0.5 bg-amber-400" />
+            <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 transition-colors duration-500 ${
+              isDarkMode ? "text-amber-400" : "text-amber-600"
+            }`}>
+              <span className={`w-8 h-0.5 transition-colors duration-500 ${
+                isDarkMode ? "bg-amber-400" : "bg-amber-400"
+              }`} />
               MEET THE TEAM
             </span>
-            <h2 className="text-gray-900 text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className={`text-4xl lg:text-5xl font-bold mb-6 transition-colors duration-500 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}>
               Expert <span className="text-amber-500">Leadership</span>
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className={`text-lg transition-colors duration-500 ${
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            }`}>
               Our team of seasoned professionals brings decades of combined experience in luxury real estate
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member, index) => (
+            {teamMembers.map((member) => (
               <div
                 key={member.name}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
+                className={`rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group ${
+                  isDarkMode 
+                    ? "bg-gray-800 border border-gray-700 hover:border-gray-600" 
+                    : "bg-white"
+                }`}
               >
                 {/* Image */}
                 <div className="relative h-64 overflow-hidden">
@@ -337,7 +444,11 @@ export default function AboutPage() {
                       backgroundPosition: 'center',
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className={`absolute inset-0 transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gradient-to-t from-black/50 to-transparent" 
+                      : "bg-gradient-to-t from-black/40 to-transparent"
+                  }`} />
                   
                   {/* Social Links (Hover) */}
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -345,9 +456,15 @@ export default function AboutPage() {
                       {['LinkedIn', 'Twitter'].map((social) => (
                         <button
                           key={social}
-                          className="bg-white/90 backdrop-blur-sm p-2 rounded-lg hover:bg-white transition-colors duration-300"
+                          className={`backdrop-blur-sm p-2 rounded-lg transition-colors duration-300 ${
+                            isDarkMode 
+                              ? "bg-gray-700/80 hover:bg-gray-700" 
+                              : "bg-white/90 hover:bg-white"
+                          }`}
                         >
-                          <span className="text-xs font-semibold text-gray-700">{social.charAt(0)}</span>
+                          <span className={`text-xs font-semibold transition-colors duration-300 ${
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
+                          }`}>{social.charAt(0)}</span>
                         </button>
                       ))}
                     </div>
@@ -356,18 +473,28 @@ export default function AboutPage() {
 
                 {/* Content */}
                 <div className="p-6">
-                  <h3 className="text-gray-900 text-xl font-bold mb-1">{member.name}</h3>
-                  <div className="text-amber-600 font-semibold mb-3">{member.role}</div>
-                  <p className="text-gray-500 text-sm mb-4">{member.experience}</p>
+                  <h3 className={`text-xl font-bold mb-1 transition-colors duration-500 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>{member.name}</h3>
+                  <div className="text-amber-500 font-semibold mb-3">{member.role}</div>
+                  <p className={`text-sm mb-4 transition-colors duration-500 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}>{member.experience}</p>
                   
                   {/* Specialties */}
                   <div className="space-y-2">
-                    <div className="text-gray-700 text-sm font-semibold">Specialties:</div>
+                    <div className={`text-sm font-semibold transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}>Specialties:</div>
                     <div className="flex flex-wrap gap-2">
                       {member.specialties.map((specialty) => (
                         <span
                           key={specialty}
-                          className="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-medium rounded-full"
+                          className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-500 ${
+                            isDarkMode 
+                              ? "bg-amber-900/30 text-amber-300" 
+                              : "bg-amber-50 text-amber-700"
+                          }`}
                         >
                           {specialty}
                         </span>
@@ -376,7 +503,11 @@ export default function AboutPage() {
                   </div>
 
                   {/* Contact Button */}
-                  <button className="mt-6 w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:border-amber-400 hover:text-amber-600 transition-all duration-300 text-sm font-medium">
+                  <button className={`mt-6 w-full border py-2 rounded-lg transition-all duration-300 text-sm font-medium ${
+                    isDarkMode 
+                      ? "border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400" 
+                      : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                  }`}>
                     Contact {member.name.split(' ')[0]}
                   </button>
                 </div>
@@ -390,23 +521,39 @@ export default function AboutPage() {
       <section className="relative py-24 overflow-hidden">
         {/* Background */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 transition-all duration-500"
           style={{
             backgroundImage: `linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(30, 58, 138, 0.8)), url(${IMAGES.meeting})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-blue-900/80 to-purple-900/80" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+          <div className={`absolute inset-0 transition-all duration-500 ${
+            isDarkMode 
+              ? "bg-gradient-to-br from-gray-900/95 via-blue-900/85 to-purple-900/85" 
+              : "bg-gradient-to-br from-gray-900/90 via-blue-900/80 to-purple-900/80"
+          }`} />
+          <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl transition-all duration-500 ${
+            isDarkMode ? "bg-amber-400/5" : "bg-amber-500/10"
+          }`} />
+          <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl transition-all duration-500 ${
+            isDarkMode ? "bg-blue-400/5" : "bg-blue-500/10"
+          }`} />
         </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-8 border border-white/20">
-            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-            <span className="text-amber-400 text-sm font-semibold tracking-wide">
+          <div className={`inline-flex items-center gap-2 backdrop-blur-sm rounded-full px-6 py-2 mb-8 border transition-all duration-500 ${
+            isDarkMode 
+              ? "bg-white/5 border-white/10" 
+              : "bg-white/10 border-white/20"
+          }`}>
+            <span className={`w-2 h-2 rounded-full animate-pulse transition-all duration-500 ${
+              isDarkMode ? "bg-amber-400" : "bg-amber-400"
+            }`} />
+            <span className={`text-sm font-semibold tracking-wide transition-colors duration-500 ${
+              isDarkMode ? "text-amber-300" : "text-amber-400"
+            }`}>
               LET'S WORK TOGETHER
             </span>
           </div>
@@ -429,7 +576,11 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/properties"
-              className="bg-white/10 backdrop-blur-sm text-white font-semibold px-10 py-4 rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/20"
+              className={`backdrop-blur-sm text-white font-semibold px-10 py-4 rounded-xl transition-all duration-300 border ${
+                isDarkMode 
+                  ? "bg-white/5 border-white/10 hover:bg-white/10" 
+                  : "bg-white/10 border-white/20 hover:bg-white/20"
+              }`}
             >
               Browse Properties
             </Link>
@@ -443,7 +594,11 @@ export default function AboutPage() {
               { icon: <MapPinIcon size={24} className="text-amber-400" />, label: "Visit", value: "123 Luxury Ave, Beverly Hills" },
             ].map((contact, i) => (
               <div key={i} className="text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm mb-4">
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full backdrop-blur-sm mb-4 transition-all duration-500 ${
+                  isDarkMode 
+                    ? "bg-white/5" 
+                    : "bg-white/10"
+                }`}>
                   {contact.icon}
                 </div>
                 <div className="text-lg font-bold text-white mb-1">{contact.value}</div>
