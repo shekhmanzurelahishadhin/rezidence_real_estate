@@ -188,8 +188,8 @@ export default function Navbar() {
               ? "bg-gray-900/95 backdrop-blur-xl shadow-lg py-0"
               : "bg-white/95 backdrop-blur-xl shadow-lg py-0"
             : isDarkMode
-            ? "bg-gray-900/90 backdrop-blur-lg py-2"
-            : "bg-white/90 backdrop-blur-lg py-2"
+              ? "bg-gray-900/90 backdrop-blur-lg py-2"
+              : "bg-white/90 backdrop-blur-lg py-2"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -249,8 +249,8 @@ export default function Navbar() {
                                 ? "text-amber-400 bg-amber-500/10"
                                 : "text-amber-600 bg-amber-50"
                               : isDarkMode
-                              ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
-                              : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
+                                ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
+                                : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
                           }`}
                         >
                           {link.label}
@@ -270,8 +270,8 @@ export default function Navbar() {
                                 ? "text-amber-400 bg-amber-500/10"
                                 : "text-amber-600 bg-amber-50"
                               : isDarkMode
-                              ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
-                              : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
+                                ? "text-gray-300 hover:text-amber-400 hover:bg-amber-500/10"
+                                : "text-gray-700 hover:text-amber-600 hover:bg-amber-50"
                           }`}
                         >
                           {link.label}
@@ -404,205 +404,222 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileOpen && (
-          <div
-            className={`lg:hidden absolute top-full left-0 right-0 border-t shadow-2xl animate-slideDown z-50 ${
-              isDarkMode
-                ? "bg-gray-900 border-gray-800"
-                : "bg-white border-gray-100"
-            }`}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              {/* Contact Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <a
-                  href="tel:+12124567890"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
-                    isDarkMode
-                      ? "bg-gray-800 hover:bg-amber-500/10"
-                      : "bg-gray-50 hover:bg-amber-50"
-                  }`}
-                >
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
-                    }`}
-                  >
-                    <PhoneIcon
-                      size={18}
-                      className={
-                        isDarkMode ? "text-amber-400" : "text-amber-600"
-                      }
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <div
-                      className={`text-xs ${
-                        isDarkMode ? "text-gray-500" : "text-gray-500"
-                      }`}
-                    >
-                      Call us
-                    </div>
-                    <div
-                      className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
-                        isDarkMode ? "text-gray-300" : "text-gray-900"
-                      }`}
-                    >
-                      +1 (212) 456-7890
-                    </div>
-                  </div>
-                </a>
-                <a
-                  href="mailto:hello@homely.com"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
-                    isDarkMode
-                      ? "bg-gray-800 hover:bg-amber-500/10"
-                      : "bg-gray-50 hover:bg-amber-50"
-                  }`}
-                >
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
-                    }`}
-                  >
-                    <MailIcon
-                      size={18}
-                      className={
-                        isDarkMode ? "text-amber-400" : "text-amber-600"
-                      }
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <div
-                      className={`text-xs ${
-                        isDarkMode ? "text-gray-500" : "text-gray-500"
-                      }`}
-                    >
-                      Email us
-                    </div>
-                    <div
-                      className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
-                        isDarkMode ? "text-gray-300" : "text-gray-900"
-                      }`}
-                    >
-                      hello@homely.com
-                    </div>
-                  </div>
-                </a>
-              </div>
+          <div className="lg:hidden fixed inset-0 top-16 z-50">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
 
-              {/* Mobile Navigation Links */}
-              <div className="space-y-1">
-                {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
-                  const hasDropdown = link.dropdown && link.dropdown.length > 0;
-
-                  return (
-                    <div
-                      key={link.label}
-                      className={`border-b last:border-b-0 ${
-                        isDarkMode ? "border-gray-800" : "border-gray-100"
+            {/* Mobile Menu Container */}
+            <div
+              className={`absolute top-0 left-0 right-0 h-[calc(100vh-4rem)] border-t shadow-2xl animate-slideDown z-50 ${
+                isDarkMode
+                  ? "bg-gray-900 border-gray-800"
+                  : "bg-white border-gray-100"
+              }`}
+            >
+              {/* Scrollable Content */}
+              <div className="h-full overflow-y-auto">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                  {/* Contact Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <a
+                      href="tel:+12124567890"
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
+                        isDarkMode
+                          ? "bg-gray-800 hover:bg-amber-500/10"
+                          : "bg-gray-50 hover:bg-amber-50"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        {hasDropdown ? (
-                          <button
-                            onClick={() => toggleMobileDropdown(link.label)}
-                            className={`flex-1 py-3 text-base font-medium text-left transition-colors ${
-                              isActive || expandedMobileDropdowns[link.label]
-                                ? isDarkMode
-                                  ? "text-amber-400"
-                                  : "text-amber-600"
-                                : isDarkMode
-                                ? "text-gray-300 hover:text-amber-400"
-                                : "text-gray-700 hover:text-amber-600"
-                            }`}
-                          >
-                            {link.label}
-                          </button>
-                        ) : (
-                          <Link
-                            href={link.href}
-                            onClick={() => setMobileOpen(false)}
-                            className={`flex-1 py-3 text-base font-medium transition-colors ${
-                              isActive
-                                ? isDarkMode
-                                  ? "text-amber-400"
-                                  : "text-amber-600"
-                                : isDarkMode
-                                ? "text-gray-300 hover:text-amber-400"
-                                : "text-gray-700 hover:text-amber-600"
-                            }`}
-                          >
-                            {link.label}
-                          </Link>
-                        )}
-                        {hasDropdown && (
-                          <button
-                            onClick={() => toggleMobileDropdown(link.label)}
-                            className="p-2"
-                          >
-                            <ChevronDownIcon
-                              size={20}
-                              className={`transition-transform duration-300 ${
-                                expandedMobileDropdowns[link.label]
-                                  ? "rotate-180"
-                                  : ""
-                              } ${
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }`}
-                            />
-                          </button>
-                        )}
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
+                        }`}
+                      >
+                        <PhoneIcon
+                          size={18}
+                          className={
+                            isDarkMode ? "text-amber-400" : "text-amber-600"
+                          }
+                        />
                       </div>
-
-                      {/* Mobile Dropdown */}
-                      {hasDropdown && expandedMobileDropdowns[link.label] && (
-                        <div className="ml-4 mb-2 space-y-1">
-                          {link.dropdown!.map((item) => (
-                            <Link
-                              key={item.label}
-                              href={item.href}
-                              onClick={() => setMobileOpen(false)}
-                              className={`block py-2.5 text-sm hover:pl-2 transition-all duration-300 ${
-                                isDarkMode
-                                  ? "text-gray-400 hover:text-amber-400"
-                                  : "text-gray-600 hover:text-amber-600"
-                              }`}
-                            >
-                              {item.label}
-                            </Link>
-                          ))}
+                      <div className="min-w-0">
+                        <div
+                          className={`text-xs ${
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
+                          }`}
+                        >
+                          Call us
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        <div
+                          className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
+                            isDarkMode ? "text-gray-300" : "text-gray-900"
+                          }`}
+                        >
+                          +1 (212) 456-7890
+                        </div>
+                      </div>
+                    </a>
+                    <a
+                      href="mailto:hello@homely.com"
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-300 ${
+                        isDarkMode
+                          ? "bg-gray-800 hover:bg-amber-500/10"
+                          : "bg-gray-50 hover:bg-amber-50"
+                      }`}
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
+                        }`}
+                      >
+                        <MailIcon
+                          size={18}
+                          className={
+                            isDarkMode ? "text-amber-400" : "text-amber-600"
+                          }
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div
+                          className={`text-xs ${
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
+                          }`}
+                        >
+                          Email us
+                        </div>
+                        <div
+                          className={`text-sm font-semibold break-words sm:whitespace-nowrap ${
+                            isDarkMode ? "text-gray-300" : "text-gray-900"
+                          }`}
+                        >
+                          hello@homely.com
+                        </div>
+                      </div>
+                    </a>
+                  </div>
 
-              {/* Mobile CTA Buttons */}
-              <div
-                className={`mt-6 pt-6 border-t space-y-3 ${
-                  isDarkMode ? "border-gray-800" : "border-gray-100"
-                }`}
-              >
-                <Link
-                  href="/contact"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3.5 rounded-xl text-center hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
-                >
-                  Schedule Consultation
-                </Link>
-                <Link
-                  href="/signin"
-                  onClick={() => setMobileOpen(false)}
-                  className={`block w-full border-2 font-semibold py-3.5 rounded-xl text-center transition-all duration-300 ${
-                    isDarkMode
-                      ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400"
-                      : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
-                  }`}
-                >
-                  Client Login
-                </Link>
+                  {/* Mobile Navigation Links */}
+                  <div className="space-y-1">
+                    {navLinks.map((link) => {
+                      const isActive = pathname === link.href;
+                      const hasDropdown =
+                        link.dropdown && link.dropdown.length > 0;
+
+                      return (
+                        <div
+                          key={link.label}
+                          className={`border-b last:border-b-0 ${
+                            isDarkMode ? "border-gray-800" : "border-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            {hasDropdown ? (
+                              <button
+                                onClick={() => toggleMobileDropdown(link.label)}
+                                className={`flex-1 py-3 text-base font-medium text-left transition-colors ${
+                                  isActive ||
+                                  expandedMobileDropdowns[link.label]
+                                    ? isDarkMode
+                                      ? "text-amber-400"
+                                      : "text-amber-600"
+                                    : isDarkMode
+                                      ? "text-gray-300 hover:text-amber-400"
+                                      : "text-gray-700 hover:text-amber-600"
+                                }`}
+                              >
+                                {link.label}
+                              </button>
+                            ) : (
+                              <Link
+                                href={link.href}
+                                onClick={() => setMobileOpen(false)}
+                                className={`flex-1 py-3 text-base font-medium transition-colors ${
+                                  isActive
+                                    ? isDarkMode
+                                      ? "text-amber-400"
+                                      : "text-amber-600"
+                                    : isDarkMode
+                                      ? "text-gray-300 hover:text-amber-400"
+                                      : "text-gray-700 hover:text-amber-600"
+                                }`}
+                              >
+                                {link.label}
+                              </Link>
+                            )}
+                            {hasDropdown && (
+                              <button
+                                onClick={() => toggleMobileDropdown(link.label)}
+                                className="p-2"
+                              >
+                                <ChevronDownIcon
+                                  size={20}
+                                  className={`transition-transform duration-300 ${
+                                    expandedMobileDropdowns[link.label]
+                                      ? "rotate-180"
+                                      : ""
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-400"
+                                      : "text-gray-600"
+                                  }`}
+                                />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Mobile Dropdown */}
+                          {hasDropdown &&
+                            expandedMobileDropdowns[link.label] && (
+                              <div className="ml-4 mb-2 space-y-1">
+                                {link.dropdown!.map((item) => (
+                                  <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className={`block py-2.5 text-sm hover:pl-2 transition-all duration-300 ${
+                                      isDarkMode
+                                        ? "text-gray-400 hover:text-amber-400"
+                                        : "text-gray-600 hover:text-amber-600"
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mobile CTA Buttons */}
+                  <div
+                    className={`mt-6 pt-6 border-t space-y-3 pb-6 ${
+                      isDarkMode ? "border-gray-800" : "border-gray-100"
+                    }`}
+                  >
+                    <Link
+                      href="/contact"
+                      onClick={() => setMobileOpen(false)}
+                      className="block w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3.5 rounded-xl text-center hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
+                    >
+                      Schedule Consultation
+                    </Link>
+                    <Link
+                      href="/signin"
+                      onClick={() => setMobileOpen(false)}
+                      className={`block w-full border-2 font-semibold py-3.5 rounded-xl text-center transition-all duration-300 ${
+                        isDarkMode
+                          ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400"
+                          : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                      }`}
+                    >
+                      Client Login
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
