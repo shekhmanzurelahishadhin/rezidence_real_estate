@@ -17,10 +17,30 @@ import {
   ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   LogOutIcon,
   MenuIcon,
   XIcon,
+  PlusIcon,
+  EditIcon,
+  TrashIcon,
+  ListIcon,
+  MailIcon,
 } from "@/assets/icons";
+
+interface MenuItem {
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  href?: string;
+  submenu?: SubMenuItem[];
+}
+
+interface SubMenuItem {
+  title: string;
+  href: string;
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,22 +48,96 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
-  { title: "Dashboard", icon: HomeIcon, href: "/admin" },
-  { title: "Properties", icon: BuildingIcon, href: "/admin/properties" },
-  { title: "Blogs", icon: FileTextIcon, href: "/admin/blogs" },
-  { title: "Categories", icon: FolderIcon, href: "/admin/categories" },
-  { title: "Users", icon: UsersIcon, href: "/admin/users" },
-  { title: "Testimonials", icon: StarIcon, href: "/admin/testimonials" },
-  { title: "Media Library", icon: ImageIcon, href: "/admin/media" },
-  { title: "Analytics", icon: ChartBarIcon, href: "/admin/analytics" },
-  { title: "Settings", icon: SettingsIcon, href: "/admin/settings" },
+const menuItems: MenuItem[] = [
+  { 
+    title: "Dashboard", 
+    icon: HomeIcon, 
+    href: "/admin" 
+  },
+  { 
+    title: "Properties", 
+    icon: BuildingIcon,
+    submenu: [
+      { title: "All Properties", href: "/admin/properties", icon: ListIcon },
+      { title: "Add New", href: "/admin/properties/create", icon: PlusIcon },
+      { title: "Categories", href: "/admin/properties/categories", icon: FolderIcon },
+      { title: "Featured", href: "/admin/properties/featured", icon: StarIcon },
+    ]
+  },
+  { 
+    title: "Blogs", 
+    icon: FileTextIcon,
+    submenu: [
+      { title: "All Posts", href: "/admin/blogs", icon: ListIcon },
+      { title: "Add New", href: "/admin/blogs/create", icon: PlusIcon },
+      { title: "Categories", href: "/admin/blogs/categories", icon: FolderIcon },
+      { title: "Tags", href: "/admin/blogs/tags", icon: EditIcon },
+    ]
+  },
+  { 
+    title: "Categories", 
+    icon: FolderIcon, 
+    href: "/admin/categories" 
+  },
+  { 
+    title: "Users", 
+    icon: UsersIcon,
+    submenu: [
+      { title: "All Users", href: "/admin/users", icon: ListIcon },
+      { title: "Add User", href: "/admin/users/create", icon: PlusIcon },
+      { title: "Roles", href: "/admin/users/roles", icon: SettingsIcon },
+      { title: "Permissions", href: "/admin/users/permissions", icon: EditIcon },
+    ]
+  },
+  { 
+    title: "Testimonials", 
+    icon: StarIcon,
+    submenu: [
+      { title: "All Testimonials", href: "/admin/testimonials", icon: ListIcon },
+      { title: "Add New", href: "/admin/testimonials/create", icon: PlusIcon },
+      { title: "Pending", href: "/admin/testimonials/pending", icon: EditIcon },
+    ]
+  },
+  { 
+    title: "Media", 
+    icon: ImageIcon,
+    submenu: [
+      { title: "Library", href: "/admin/media", icon: ListIcon },
+      { title: "Upload", href: "/admin/media/upload", icon: PlusIcon },
+      { title: "Gallery", href: "/admin/media/gallery", icon: ImageIcon },
+    ]
+  },
+  { 
+    title: "Analytics", 
+    icon: ChartBarIcon,
+    submenu: [
+      { title: "Overview", href: "/admin/analytics", icon: ChartBarIcon },
+      { title: "Traffic", href: "/admin/analytics/traffic", icon: ChartBarIcon },
+      { title: "Users", href: "/admin/analytics/users", icon: UsersIcon },
+      { title: "Revenue", href: "/admin/analytics/revenue", icon: ChartBarIcon },
+    ]
+  },
+  { 
+    title: "Settings", 
+    icon: SettingsIcon,
+    submenu: [
+      { title: "General", href: "/admin/settings/general", icon: SettingsIcon },
+      { title: "Appearance", href: "/admin/settings/appearance", icon: ImageIcon },
+      { title: "SEO", href: "/admin/settings/seo", icon: EditIcon },
+      { title: "Social Media", href: "/admin/settings/social", icon: UsersIcon },
+      { title: "Email", href: "/admin/settings/email", icon: MailIcon },
+      { title: "Backup", href: "/admin/settings/backup", icon: SettingsIcon },
+    ]
+  },
 ];
+
+
 
 export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { isDarkMode } = useTheme();
   const [isMobile, setIsMobile] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -62,6 +156,35 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
     if (isMobile) {
       onClose();
     }
+  };
+
+  // Toggle submenu expansion
+  const toggleSubmenu = (title: string) => {
+    if (expandedMenu === title) {
+      setExpandedMenu(null);
+    } else {
+      setExpandedMenu(title);
+    }
+  };
+
+  // Check if menu item is active (including submenu items)
+  const isMenuItemActive = (item: MenuItem): boolean => {
+    if (item.href) {
+      return pathname === item.href || pathname.startsWith(`${item.href}/`);
+    }
+    
+    if (item.submenu) {
+      return item.submenu.some(subItem => 
+        pathname === subItem.href || pathname.startsWith(`${subItem.href}/`)
+      );
+    }
+    
+    return false;
+  };
+
+  // Check if submenu item is active
+  const isSubmenuItemActive = (href: string): boolean => {
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   return (
@@ -95,7 +218,6 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
           boxShadow: isDarkMode 
             ? "2px 0 8px rgba(0, 0, 0, 0.3)" 
             : "2px 0 8px rgba(0, 0, 0, 0.1)",
-          // Add inline styles as fallback
           msOverflowStyle: 'none',
           scrollbarWidth: 'none',
         }}
@@ -155,61 +277,206 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
           <nav className="space-y-1 px-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              
+              const isActive = isMenuItemActive(item);
+              const hasSubmenu = item.submenu && item.submenu.length > 0;
+              const isExpanded = expandedMenu === item.title;
+
               return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  onClick={handleLinkClick}
-                  className={`relative flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group ${
-                    isActive
-                      ? isDarkMode
-                        ? "bg-amber-500/20 text-amber-400"
-                        : "bg-amber-50 text-amber-700"
-                      : isDarkMode
-                      ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 ${
-                      isActive
-                        ? isDarkMode
-                          ? "bg-amber-500/30"
-                          : "bg-amber-500/10"
-                        : isDarkMode
-                        ? "bg-gray-700/50 group-hover:bg-gray-700"
-                        : "bg-gray-100 group-hover:bg-gray-200"
-                    }`}
-                  >
-                    <Icon
-                      size={18}
-                      className={
+                <div key={item.title} className="space-y-1">
+                  {/* Main Menu Item */}
+                  {hasSubmenu ? (
+                    <button
+                      onClick={() => toggleSubmenu(item.title)}
+                      className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-300 group ${
                         isActive
                           ? isDarkMode
-                            ? "text-amber-400"
-                            : "text-amber-600"
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-amber-50 text-amber-700"
                           : isDarkMode
-                          ? "text-gray-400 group-hover:text-gray-300"
-                          : "text-gray-500 group-hover:text-gray-700"
-                      }
-                    />
-                  </div>
-                  
-                  {isOpen && (
-                    <span className="font-medium whitespace-nowrap">
-                      {item.title}
-                    </span>
+                          ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 ${
+                            isActive
+                              ? isDarkMode
+                                ? "bg-amber-500/30"
+                                : "bg-amber-500/10"
+                              : isDarkMode
+                              ? "bg-gray-700/50 group-hover:bg-gray-700"
+                              : "bg-gray-100 group-hover:bg-gray-200"
+                          }`}
+                        >
+                          <Icon
+                            size={18}
+                            className={
+                              isActive
+                                ? isDarkMode
+                                  ? "text-amber-400"
+                                  : "text-amber-600"
+                                : isDarkMode
+                                ? "text-gray-400 group-hover:text-gray-300"
+                                : "text-gray-500 group-hover:text-gray-700"
+                            }
+                          />
+                        </div>
+                        
+                        {isOpen && (
+                          <span className="font-medium whitespace-nowrap">
+                            {item.title}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {isOpen && hasSubmenu && (
+                        <div className="flex items-center">
+                          {isActive && (
+                            <div
+                              className={`w-2 h-2 rounded-full mr-2 ${
+                                isDarkMode ? "bg-amber-400" : "bg-amber-600"
+                              }`}
+                            />
+                          )}
+                          {isExpanded ? (
+                            <ChevronUpIcon
+                              size={16}
+                              className={isDarkMode ? "text-gray-400" : "text-gray-500"}
+                            />
+                          ) : (
+                            <ChevronDownIcon
+                              size={16}
+                              className={isDarkMode ? "text-gray-400" : "text-gray-500"}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href!}
+                      onClick={handleLinkClick}
+                      className={`flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-300 group ${
+                        isActive
+                          ? isDarkMode
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-amber-50 text-amber-700"
+                          : isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 ${
+                            isActive
+                              ? isDarkMode
+                                ? "bg-amber-500/30"
+                                : "bg-amber-500/10"
+                              : isDarkMode
+                              ? "bg-gray-700/50 group-hover:bg-gray-700"
+                              : "bg-gray-100 group-hover:bg-gray-200"
+                          }`}
+                        >
+                          <Icon
+                            size={18}
+                            className={
+                              isActive
+                                ? isDarkMode
+                                  ? "text-amber-400"
+                                  : "text-amber-600"
+                                : isDarkMode
+                                ? "text-gray-400 group-hover:text-gray-300"
+                                : "text-gray-500 group-hover:text-gray-700"
+                            }
+                          />
+                        </div>
+                        
+                        {isOpen && (
+                          <span className="font-medium whitespace-nowrap">
+                            {item.title}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {isActive && isOpen && (
+                        <div className="flex items-center">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              isDarkMode ? "bg-amber-400" : "bg-amber-600"
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </Link>
                   )}
-                  
-                  {isActive && isOpen && (
-                    <div className="ml-auto">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          isDarkMode ? "bg-amber-400" : "bg-amber-600"
-                        }`}
-                      />
+
+                  {/* Submenu Items */}
+                  {hasSubmenu && isOpen && isExpanded && (
+                    <div className={`ml-8 space-y-1 ${
+                      isDarkMode ? "border-l border-gray-700" : "border-l border-gray-200"
+                    }`}>
+                      {item.submenu!.map((subItem) => {
+                        const SubIcon = subItem.icon || Icon;
+                        const isSubActive = isSubmenuItemActive(subItem.href);
+
+                        return (
+                          <Link
+                            key={subItem.title}
+                            href={subItem.href}
+                            onClick={handleLinkClick}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group ${
+                              isSubActive
+                                ? isDarkMode
+                                  ? "bg-amber-500/15 text-amber-300"
+                                  : "bg-amber-50/80 text-amber-600"
+                                : isDarkMode
+                                ? "text-gray-400 hover:bg-gray-700/30 hover:text-gray-300"
+                                : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
+                            }`}
+                          >
+                            <div
+                              className={`flex items-center justify-center w-6 h-6 rounded-lg transition-colors duration-300 ${
+                                isSubActive
+                                  ? isDarkMode
+                                    ? "bg-amber-500/20"
+                                    : "bg-amber-500/10"
+                                  : isDarkMode
+                                  ? "bg-gray-700/30 group-hover:bg-gray-700/50"
+                                  : "bg-gray-100 group-hover:bg-gray-200"
+                              }`}
+                            >
+                              <SubIcon
+                                size={14}
+                                className={
+                                  isSubActive
+                                    ? isDarkMode
+                                      ? "text-amber-300"
+                                      : "text-amber-600"
+                                    : isDarkMode
+                                    ? "text-gray-400 group-hover:text-gray-300"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                                }
+                              />
+                            </div>
+                            
+                            <span className="text-sm font-medium whitespace-nowrap">
+                              {subItem.title}
+                            </span>
+                            
+                            {isSubActive && (
+                              <div className="ml-auto">
+                                <div
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    isDarkMode ? "bg-amber-300" : "bg-amber-500"
+                                  }`}
+                                />
+                              </div>
+                            )}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                   
@@ -217,9 +484,23 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
                   {!isOpen && !isMobile && (
                     <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50 shadow-lg">
                       {item.title}
+                      {hasSubmenu && (
+                        <div className="mt-1 pt-1 border-t border-gray-700">
+                          {item.submenu!.slice(0, 3).map((subItem) => (
+                            <div key={subItem.title} className="py-1 text-gray-300">
+                              {subItem.title}
+                            </div>
+                          ))}
+                          {item.submenu!.length > 3 && (
+                            <div className="py-1 text-gray-400 text-xs">
+                              +{item.submenu!.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </nav>
@@ -271,15 +552,6 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
         )}
       </aside>
 
-      {/* Expand Button for Desktop (when collapsed) */}
-      {!isOpen && !isMobile && (
-        <button
-          onClick={onToggle}
-          className="fixed left-20 top-1/2 -translate-y-1/2 z-40 w-8 h-8 rounded-r-lg bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-        >
-          <ChevronRightIcon size={16} className="text-white" />
-        </button>
-      )}
     </>
   );
 }
