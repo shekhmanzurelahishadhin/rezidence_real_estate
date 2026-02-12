@@ -57,22 +57,12 @@ const menuItems: MenuItem[] = [
   { 
     title: "Properties", 
     icon: BuildingIcon,
-    submenu: [
-      { title: "All Properties", href: "/admin/properties", icon: ListIcon },
-      { title: "Add New", href: "/admin/properties/create", icon: PlusIcon },
-      { title: "Categories", href: "/admin/properties/categories", icon: FolderIcon },
-      { title: "Featured", href: "/admin/properties/featured", icon: StarIcon },
-    ]
+    href: "/admin/properties"
   },
   { 
     title: "Blogs", 
     icon: FileTextIcon,
-    submenu: [
-      { title: "All Posts", href: "/admin/blogs", icon: ListIcon },
-      { title: "Add New", href: "/admin/blogs/create", icon: PlusIcon },
-      { title: "Categories", href: "/admin/blogs/categories", icon: FolderIcon },
-      { title: "Tags", href: "/admin/blogs/tags", icon: EditIcon },
-    ]
+    href: "/admin/blogs"
   },
   { 
     title: "Categories", 
@@ -169,18 +159,49 @@ export default function AdminSidebar({ isOpen, onClose, onToggle }: SidebarProps
 
   // Check if menu item is active (including submenu items)
   const isMenuItemActive = (item: MenuItem): boolean => {
-    if (item.href) {
-      return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  if (item.href) {
+    // For dashboard, we need exact match or specific dashboard routes
+    if (item.href === "/admin") {
+      // Only mark as active if we're exactly at /admin or /admin/ with nothing else
+      return pathname === "/admin" || pathname === "/admin/" || pathname.startsWith("/admin/?");
     }
+    // For other routes, use more specific matching
+    const normalizedPath = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+    const normalizedHref = item.href.endsWith("/") ? item.href.slice(0, -1) : item.href;
     
-    if (item.submenu) {
-      return item.submenu.some(subItem => 
-        pathname === subItem.href || pathname.startsWith(`${subItem.href}/`)
-      );
+    // Check exact match
+    if (normalizedPath === normalizedHref) return true;
+    
+    // Check if it's a subpath (but avoid matching parent paths incorrectly)
+    if (normalizedPath.startsWith(`${normalizedHref}/`)) {
+      // Make sure we're not matching something like /admin/properties-edit when href is /admin/properties
+      const nextChar = normalizedPath.charAt(normalizedHref.length);
+      return nextChar === "/" || nextChar === "" || nextChar === "?";
     }
     
     return false;
-  };
+  }
+  
+  if (item.submenu) {
+    return item.submenu.some(subItem => {
+      const normalizedPath = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+      const normalizedHref = subItem.href.endsWith("/") ? subItem.href.slice(0, -1) : subItem.href;
+      
+      // Check exact match
+      if (normalizedPath === normalizedHref) return true;
+      
+      // Check if it's a subpath
+      if (normalizedPath.startsWith(`${normalizedHref}/`)) {
+        const nextChar = normalizedPath.charAt(normalizedHref.length);
+        return nextChar === "/" || nextChar === "" || nextChar === "?";
+      }
+      
+      return false;
+    });
+  }
+  
+  return false;
+};
 
   // Check if submenu item is active
   const isSubmenuItemActive = (href: string): boolean => {

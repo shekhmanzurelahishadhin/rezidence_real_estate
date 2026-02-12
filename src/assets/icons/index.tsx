@@ -693,3 +693,33 @@ export const TrashIcon = ({ size = 20, color = "currentColor", className }: Icon
     <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 );
+
+
+// More Vertical Icon
+export const MoreVerticalIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </svg>
+);
+
+
+// Refresh Icon
+export const RefreshIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 2v6h-6" />
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+    <path d="M3 22v-6h6" />
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+  </svg>
+);
+
+// Upload Icon
+export const UploadIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
