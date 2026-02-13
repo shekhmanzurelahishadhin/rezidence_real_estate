@@ -423,12 +423,12 @@ export default function BlogsPage() {
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
-                      checked={selectedRows.includes(blog.id)}
+                      checked={selectedRows.includes(Number(blog.id))}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedRows(prev => [...prev, blog.id]);
+                          setSelectedRows(prev => [...prev, Number(blog.id)]);
                         } else {
-                          setSelectedRows(prev => prev.filter(id => id !== blog.id));
+                          setSelectedRows(prev => prev.filter(id => id !== Number(blog.id)));
                         }
                       }}
                       className={`rounded border transition-colors duration-300 ${
