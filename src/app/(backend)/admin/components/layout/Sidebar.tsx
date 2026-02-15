@@ -27,6 +27,7 @@ import {
   TrashIcon,
   ListIcon,
   MailIcon,
+  HeartIcon,
 } from "@/assets/icons";
 
 interface MenuItem {
@@ -68,6 +69,11 @@ const menuItems: MenuItem[] = [
     title: "Categories", 
     icon: FolderIcon, 
     href: "/admin/categories" 
+  },
+  { 
+    title: "About Us", 
+    icon: HeartIcon, 
+    href: "/admin/about" 
   },
   { 
     title: "Users", 
