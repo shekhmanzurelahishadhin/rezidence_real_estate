@@ -81,6 +81,11 @@ const menuItems: MenuItem[] = [
     href: "/admin/team" 
   },
   { 
+    title: "Testimonials", 
+    icon: StarIcon, 
+    href: "/admin/testimonials" 
+  },
+  { 
     title: "Users", 
     icon: UsersIcon,
     submenu: [
