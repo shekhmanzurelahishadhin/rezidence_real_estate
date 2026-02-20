@@ -1,0 +1,57 @@
+// app/(backend)/admin/faqs/data.ts
+export const mockFAQs = [
+  {
+    id: 1,
+    question: "How do I start the home buying process?",
+    answer: "The home buying process typically starts with getting pre-approved for a mortgage, determining your budget, and finding a real estate agent. We recommend starting with a consultation to discuss your needs and financial situation.",
+    category: "Buying",
+    status: "published",
+    order: 1,
+    createdAt: "2024-01-15",
+  },
+  {
+    id: 2,
+    question: "What are the costs involved in selling a home?",
+    answer: "When selling a home, common costs include real estate commission (typically 5-6%), closing costs, staging expenses, potential repairs, and moving costs. We provide a detailed breakdown during our consultation.",
+    category: "Selling",
+    status: "published",
+    order: 2,
+    createdAt: "2024-01-18",
+  },
+  {
+    id: 3,
+    question: "How long does it take to close on a house?",
+    answer: "The closing process typically takes 30-45 days from the time an offer is accepted. This includes the inspection period, appraisal, loan processing, and final paperwork. The timeline can vary based on financing and any contingencies.",
+    category: "Process",
+    status: "published",
+    order: 3,
+    createdAt: "2024-01-20",
+  },
+  {
+    id: 4,
+    question: "Do I need a real estate agent to buy a home?",
+    answer: "While it's possible to buy without an agent, having professional representation is highly recommended. An agent provides market expertise, negotiation skills, access to listings, and guidance through the complex paperwork and legal requirements.",
+    category: "General",
+    status: "published",
+    order: 4,
+    createdAt: "2024-01-22",
+  },
+  {
+    id: 5,
+    question: "What is a home inspection and why is it important?",
+    answer: "A home inspection is a thorough examination of a property's condition by a certified professional. It's crucial because it identifies potential issues with the structure, systems, and components, helping you make an informed decision and negotiate repairs.",
+    category: "Buying",
+    status: "pending",
+    order: 5,
+    createdAt: "2024-02-01",
+  },
+  {
+    id: 6,
+    question: "How is property tax calculated?",
+    answer: "Property tax is calculated based on the assessed value of your home and the local tax rate. The assessment is typically done by the county assessor, and rates vary by location. We can help you estimate these costs for any property you're considering.",
+    category: "General",
+    status: "draft",
+    order: 6,
+    createdAt: "2024-02-05",
+  }
+];
