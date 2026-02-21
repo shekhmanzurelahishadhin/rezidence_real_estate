@@ -1,7 +1,7 @@
 // app/(backend)/admin/faqs/page.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTheme } from "@/app/ThemeProvider";
 import {
   PlusIcon,
@@ -512,7 +512,7 @@ export default function FAQsPage() {
             </thead>
             <tbody>
               {sortedFaqs.map((faq) => (
-                <>
+                <React.Fragment key={faq.id}>
                   <tr
                     key={faq.id}
                     className={`border-b transition-all duration-300 ${
@@ -679,7 +679,7 @@ export default function FAQsPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                 </React.Fragment>
               ))}
             </tbody>
           </table>
