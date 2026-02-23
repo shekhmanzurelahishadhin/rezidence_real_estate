@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +66,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $categories,
+            'data' => CategoryResource::collection($categories),
             'message' => 'Categories retrieved successfully'
         ]);
     }
@@ -95,7 +96,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => new CategoryResource($category),
             'message' => 'Category created successfully'
         ], 201);
     }
@@ -109,7 +110,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => new CategoryResource($category),
             'message' => 'Category retrieved successfully'
         ]);
     }
@@ -144,7 +145,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => new CategoryResource($category),
             'message' => 'Category updated successfully'
         ]);
     }
@@ -224,7 +225,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => new CategoryResource($category),
             'message' => $category->featured ? 'Category featured' : 'Category unfeatured'
         ]);
     }
@@ -244,7 +245,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => new CategoryResource($category),
             'message' => 'Category status updated successfully'
         ]);
     }
