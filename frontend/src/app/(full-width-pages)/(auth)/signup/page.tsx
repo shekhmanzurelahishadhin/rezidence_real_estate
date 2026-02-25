@@ -54,12 +54,11 @@ export default function AdminSignUpPage() {
       if (response.success) {
         // Store token and user data
         localStorage.setItem('admin_token', response.data.token);
-        localStorage.setItem('admin_data', JSON.stringify(response.data.admin));
         localStorage.setItem('admin_roles', JSON.stringify(response.data.roles));
         localStorage.setItem('admin_permissions', JSON.stringify(response.data.permissions));
         
         // Redirect to admin dashboard
-        router.push("/admin/dashboard");
+        router.push("/admin");
       } else {
         if (response.errors) {
           setErrors(response.errors);

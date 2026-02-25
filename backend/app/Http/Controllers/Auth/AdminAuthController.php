@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\Auth;
@@ -112,6 +111,16 @@ class AdminAuthController extends Controller
                 'roles' => $admin->getRoleNames(),
                 'permissions' => $admin->getAllPermissions()->pluck('name'),
             ]
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully'
         ]);
     }
 

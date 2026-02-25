@@ -1,8 +1,9 @@
 // app/(backend)/admin/components/layout/Header.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/ThemeProvider";
 import {
   BellIcon,
@@ -16,16 +17,73 @@ import {
   SettingsIcon,
   LogOutIcon,
 } from "@/assets/icons";
+import { apiRequest } from "@/app/lib/api";
 
 interface HeaderProps {
   onMenuClick: () => void;
   sidebarOpen: boolean;
 }
 
+interface AdminUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
+  const router = useRouter();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [userInitials, setUserInitials] = useState("AD");
+
+  // Load user data from localStorage on component mount
+  useEffect(() => {
+    const loadUserData = () => {
+      try {
+        // Get user data from localStorage
+        const userDataString = localStorage.getItem('admin_data');
+        const userRolesString = localStorage.getItem('admin_roles');
+        
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          setUser(userData);
+          
+          // Generate initials from first and last name
+          if (userData.first_name && userData.last_name) {
+            const initials = `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`.toUpperCase();
+            setUserInitials(initials);
+          } else if (userData.first_name) {
+            setUserInitials(userData.first_name.charAt(0).toUpperCase());
+          } else if (userData.email) {
+            setUserInitials(userData.email.charAt(0).toUpperCase());
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+
+    loadUserData();
+
+    // Optional: Listen for storage changes (if user updates profile in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'admin_data') {
+        loadUserData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const notifications = [
     { id: 1, title: "New property listed", time: "5 min ago", unread: true },
@@ -34,6 +92,92 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
   ];
 
   const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      // Call logout API
+      const response = await apiRequest('/admin/logout', {
+        method: 'POST',
+      }, 'admin');
+
+      if (response.success) {
+        // Clear all admin-related data from localStorage
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_data');
+        localStorage.removeItem('admin_roles');
+        localStorage.removeItem('admin_permissions');
+        
+        // Redirect to admin login page
+        router.push('/admin/signin');
+      } else {
+        console.error('Logout failed:', response.message);
+        // Still clear local data even if API fails
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_data');
+        localStorage.removeItem('admin_roles');
+        localStorage.removeItem('admin_permissions');
+        router.push('/admin/signin');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear local data on error and redirect
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_data');
+      localStorage.removeItem('admin_roles');
+      localStorage.removeItem('admin_permissions');
+      router.push('/admin/signin');
+    } finally {
+      setIsLoggingOut(false);
+      setShowUserMenu(false);
+    }
+  };
+
+  // Get user's display name and role
+  const getUserDisplayName = () => {
+    if (!user) return "Admin User";
+    
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    } else if (user.first_name) {
+      return user.first_name;
+    } else if (user.email) {
+      return user.email.split('@')[0];
+    }
+    return "Admin User";
+  };
+
+  const getUserRole = () => {
+    if (!user) return "Administrator";
+    
+    // Get from user object
+    if (user.role) {
+      // Format role name (e.g., "super-admin" -> "Super Admin")
+      return user.role
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    
+    // Try to get from roles in localStorage
+    try {
+      const rolesString = localStorage.getItem('admin_roles');
+      if (rolesString) {
+        const roles = JSON.parse(rolesString);
+        if (roles && roles.length > 0) {
+          return roles[0]
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing roles:", error);
+    }
+    
+    return "Administrator";
+  };
 
   return (
     <header
@@ -49,6 +193,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
           <button
             onClick={onMenuClick}
             className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300"
+            aria-label="Toggle sidebar"
           >
             <div className="space-y-1.5">
               <div
@@ -128,6 +273,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 relative"
+              aria-label="Toggle notifications"
             >
               <BellIcon
                 size={20}
@@ -204,6 +350,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                           ? "text-amber-400 hover:text-amber-300"
                           : "text-amber-600 hover:text-amber-700"
                       }`}
+                      onClick={() => setShowNotifications(false)}
                     >
                       View all notifications
                     </Link>
@@ -218,21 +365,23 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300"
+              aria-label="User menu"
+              disabled={isLoggingOut}
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                <span className="text-white text-sm font-bold">JD</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{userInitials}</span>
               </div>
               
               <div className="hidden lg:block text-left">
                 <p className={`text-sm font-medium transition-colors duration-500 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}>
-                  John Doe
+                  {getUserDisplayName()}
                 </p>
                 <p className={`text-xs transition-colors duration-500 ${
                   isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}>
-                  Admin
+                  {getUserRole()}
                 </p>
               </div>
               
@@ -252,7 +401,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                   onClick={() => setShowUserMenu(false)}
                 />
                 <div
-                  className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border py-1 z-50 transition-all duration-500 ${
+                  className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-1 z-50 transition-all duration-500 ${
                     isDarkMode
                       ? "bg-gray-800 border-gray-700"
                       : "bg-white border-gray-200"
@@ -262,12 +411,17 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                     <p className={`font-medium transition-colors duration-500 ${
                       isDarkMode ? "text-white" : "text-gray-900"
                     }`}>
-                      John Doe
+                      {getUserDisplayName()}
                     </p>
                     <p className={`text-sm transition-colors duration-500 ${
                       isDarkMode ? "text-gray-400" : "text-gray-500"
                     }`}>
-                      john@example.com
+                      {user?.email || "admin@example.com"}
+                    </p>
+                    <p className={`text-xs mt-1 transition-colors duration-500 ${
+                      isDarkMode ? "text-amber-400" : "text-amber-600"
+                    }`}>
+                      {getUserRole()}
                     </p>
                   </div>
                   
@@ -276,6 +430,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-700/50 transition-colors duration-300 ${
                       isDarkMode ? "text-gray-300" : "text-gray-700"
                     }`}
+                    onClick={() => setShowUserMenu(false)}
                   >
                     <UserIcon size={18} />
                     My Profile
@@ -286,6 +441,7 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-700/50 transition-colors duration-300 ${
                       isDarkMode ? "text-gray-300" : "text-gray-700"
                     }`}
+                    onClick={() => setShowUserMenu(false)}
                   >
                     <SettingsIcon size={18} />
                     Settings
@@ -296,12 +452,23 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
                   }`} />
                   
                   <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
                     className={`flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-700/50 transition-colors duration-300 ${
                       isDarkMode ? "text-red-400" : "text-red-600"
-                    }`}
+                    } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <LogOutIcon size={18} />
-                    Sign Out
+                    {isLoggingOut ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                        Signing Out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOutIcon size={18} />
+                        Sign Out
+                      </>
+                    )}
                   </button>
                 </div>
               </>
