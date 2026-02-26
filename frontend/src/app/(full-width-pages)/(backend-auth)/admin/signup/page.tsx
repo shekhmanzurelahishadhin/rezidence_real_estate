@@ -93,7 +93,7 @@ export default function AdminSignUpPage() {
       isDarkMode ? "bg-gray-900" : "bg-white"
     }`}>
       {/* Floating Buttons */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="floating-buttons-container">
         <button
           onClick={toggleDarkMode}
           className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"

@@ -97,43 +97,59 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
     setIsLoggingOut(true);
     
     try {
-      // Call logout API
-      const response = await apiRequest('/admin/logout', {
-        method: 'POST',
-      }, 'admin');
-
-      if (response.success) {
-        // Clear all admin-related data from localStorage
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_data');
-        localStorage.removeItem('admin_roles');
-        localStorage.removeItem('admin_permissions');
-        
-        // Redirect to admin login page
+      const token = localStorage.getItem('admin_token');
+      
+      // If no token, just redirect
+      if (!token) {
+        clearAdminData();
         router.push('/admin/signin');
-      } else {
-        console.error('Logout failed:', response.message);
-        // Still clear local data even if API fails
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_data');
-        localStorage.removeItem('admin_roles');
-        localStorage.removeItem('admin_permissions');
+        return;
+      }
+
+      // Try to call logout API with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      try {
+        const response = await apiRequest('/admin/logout', {
+          method: 'POST',
+          signal: controller.signal
+        }, 'admin');
+        
+        clearTimeout(timeoutId);
+        
+        if (response && response.success) {
+          clearAdminData();
+          router.push('/admin/signin');
+        } else {
+          // API call succeeded but logout failed
+          clearAdminData();
+          router.push('/admin/signin');
+        }
+      } catch (apiError) {
+        clearTimeout(timeoutId);
+        
+        // If API call fails (including 401), still logout locally
+        console.log('API logout failed, performing local logout:', apiError);
+        clearAdminData();
         router.push('/admin/signin');
       }
     } catch (error) {
       console.error('Logout error:', error);
-      // Clear local data on error and redirect
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_data');
-      localStorage.removeItem('admin_roles');
-      localStorage.removeItem('admin_permissions');
+      clearAdminData();
       router.push('/admin/signin');
     } finally {
       setIsLoggingOut(false);
       setShowUserMenu(false);
     }
   };
-
+// Helper function to clear admin data
+const clearAdminData = () => {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_data');
+  localStorage.removeItem('admin_roles');
+  localStorage.removeItem('admin_permissions');
+};
   // Get user's display name and role
   const getUserDisplayName = () => {
     if (!user) return "Admin User";

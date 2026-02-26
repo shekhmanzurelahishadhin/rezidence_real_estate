@@ -1,106 +1,107 @@
-// app/(backend)/admin/auth/login/page.tsx
+// app/(full-width-pages)/(auth)/admin/signin/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  EyeIcon, 
-  EyeOffIcon, 
-  MailIcon, 
-  LockIcon, 
-  ShieldIcon,
-  BuildingIcon,
-  AlertCircleIcon,
-  LogInIcon,
-  ArrowLeftIcon,
+import {
+  MailIcon,
+  LockIcon,
+  EyeIcon,
+  EyeOffIcon,
   SunIcon,
   MoonIcon,
-  HomeIcon
+  LogInIcon,
+  ShieldIcon,
+  AlertCircleIcon,
+  ArrowLeftIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
+import { apiRequest } from "@/app/lib/api";
 
-export default function AdminLoginPage() {
+export default function AdminSignInPage() {
   const router = useRouter();
-  const { isDarkMode, toggleDarkMode } = useTheme();
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    remember_me: false,
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.email) {
-      newErrors.email = "Admin email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-    
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [apiError, setApiError] = useState("");
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
     setIsLoading(true);
-    
+    setErrors({});
+    setApiError("");
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo purposes, accept any admin email
-      if (formData.email && formData.password) {
-        // Store login state
-        localStorage.setItem("admin_logged_in", "true");
-        localStorage.setItem("admin_email", formData.email);
-        if (rememberMe) {
-          localStorage.setItem("admin_remember", "true");
+      const response = await apiRequest('/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      }, 'admin');
+
+      if (response.success) {
+        console.log("Login successful:", response);
+        // Store token and user data
+        localStorage.setItem('admin_token', response.data.token);
+        localStorage.setItem('admin_data', JSON.stringify(response.data.admin));
+        localStorage.setItem('admin_roles', JSON.stringify(response.data.roles || []));
+        localStorage.setItem('admin_permissions', JSON.stringify(response.data.permissions || []));
+        
+        // Set remember me preference
+        if (formData.remember_me) {
+          localStorage.setItem('admin_remember', 'true');
         }
         
         // Redirect to admin dashboard
-        router.push("/admin/dashboard");
+        router.push("/admin");
+      } else {
+        if (response.errors) {
+          setErrors(response.errors);
+        } else {
+          setApiError(response.message || "Invalid credentials");
+        }
       }
-    } catch (error) {
-      setErrors({ submit: "Invalid admin credentials" });
+    } catch (error: any) {
+      setApiError(error.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
     
-    // Clear error for this field
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Clear field error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors(prev => ({ ...prev, [name]: [] }));
+    }
+    if (apiError) {
+      setApiError("");
     }
   };
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${
-      isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" : "bg-gradient-to-br from-amber-50 via-white to-blue-50"
+      isDarkMode ? "bg-gray-900" : "bg-gray-50"
     }`}>
       {/* Floating Dark Mode Toggle */}
-        <div className="floating-buttons-container">
+      <div className="floating-buttons-container">
         <button
           onClick={toggleDarkMode}
           className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
-          aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
           style={{
             background: isDarkMode
               ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
@@ -109,17 +110,9 @@ export default function AdminLoginPage() {
         >
           <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {isDarkMode ? (
-            <SunIcon
-              size={20}
-              color="white"
-              className="group-hover:rotate-180 transition-transform duration-500"
-            />
+            <SunIcon size={20} color="white" />
           ) : (
-            <MoonIcon
-              size={20}
-              color="white"
-              className="group-hover:rotate-180 transition-transform duration-500"
-            />
+            <MoonIcon size={20} color="white" />
           )}
         </button>
       </div>
@@ -128,7 +121,7 @@ export default function AdminLoginPage() {
       <nav className={`transition-all duration-500 ${
         isDarkMode 
           ? "border-b border-gray-800" 
-          : "border-b border-gray-100"
+          : "border-b border-gray-200 bg-white"
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -161,7 +154,7 @@ export default function AdminLoginPage() {
               }`}
             >
               <ArrowLeftIcon size={16} />
-              Back to Home
+              Back to Admin
             </Link>
           </div>
         </div>
@@ -184,12 +177,12 @@ export default function AdminLoginPage() {
           <h1 className={`text-3xl font-bold mb-3 transition-colors duration-500 ${
             isDarkMode ? "text-white" : "text-gray-900"
           }`}>
-            Admin Authentication
+            Admin Sign In
           </h1>
           <p className={`transition-colors duration-500 ${
-            isDarkMode ? "text-gray-300" : "text-gray-600"
+            isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}>
-            Enter your admin credentials to access the management panel
+            Enter your credentials to access the admin dashboard
           </p>
         </div>
 
@@ -200,9 +193,7 @@ export default function AdminLoginPage() {
             : "bg-white border-gray-200"
         }`}>
           {/* Gradient Border */}
-          <div className={`h-1 ${
-            isDarkMode ? "bg-gradient-to-r from-amber-500/30 via-blue-500/30 to-purple-500/30" : "bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500"
-          }`} />
+          <div className={`h-1 bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500`} />
           
           <div className="p-8">
             {/* Demo Credentials */}
@@ -223,7 +214,7 @@ export default function AdminLoginPage() {
                     isDarkMode ? "text-gray-400" : "text-gray-600"
                   }`}>
                     Email: admin@example.com<br />
-                    Password: admin123
+                    Password: password
                   </p>
                 </div>
               </div>
@@ -231,12 +222,27 @@ export default function AdminLoginPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* API Error Message */}
+              {apiError && (
+                <div className={`px-4 py-3 rounded-lg text-sm flex items-center gap-2 ${
+                  isDarkMode 
+                    ? "bg-red-900/30 border border-red-800 text-red-300" 
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}>
+                  <AlertCircleIcon size={16} />
+                  {apiError}
+                </div>
+              )}
+
               {/* Email Field */}
               <div>
-                <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}>
-                  Admin Email
+                <label 
+                  htmlFor="email"
+                  className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -246,22 +252,25 @@ export default function AdminLoginPage() {
                     />
                   </div>
                   <input
+                    id="email"
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                      errors.email ? 'border-red-500 focus:ring-red-500/20' :
                       isDarkMode
                         ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                         : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
-                    } ${errors.email ? "border-red-500 focus:ring-red-500/20" : ""}`}
+                    }`}
                     placeholder="admin@example.com"
+                    disabled={isLoading}
                   />
                 </div>
                 {errors.email && (
                   <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
                     <AlertCircleIcon size={14} />
-                    {errors.email}
+                    {errors.email[0]}
                   </p>
                 )}
               </div>
@@ -269,14 +278,16 @@ export default function AdminLoginPage() {
               {/* Password Field */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className={`block text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}>
+                  <label 
+                    htmlFor="password"
+                    className={`block text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
                     Password
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/admin/auth/forgot-password")}
+                  <Link
+                    href="/admin/forgot-password"
                     className={`text-sm transition-colors duration-300 ${
                       isDarkMode 
                         ? "text-amber-400 hover:text-amber-300" 
@@ -284,7 +295,7 @@ export default function AdminLoginPage() {
                     }`}
                   >
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -294,21 +305,25 @@ export default function AdminLoginPage() {
                     />
                   </div>
                   <input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                      errors.password ? 'border-red-500 focus:ring-red-500/20' :
                       isDarkMode
                         ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                         : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
-                    } ${errors.password ? "border-red-500 focus:ring-red-500/20" : ""}`}
+                    }`}
                     placeholder="••••••••"
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOffIcon
@@ -326,7 +341,7 @@ export default function AdminLoginPage() {
                 {errors.password && (
                   <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
                     <AlertCircleIcon size={14} />
-                    {errors.password}
+                    {errors.password[0]}
                   </p>
                 )}
               </div>
@@ -335,19 +350,20 @@ export default function AdminLoginPage() {
               <div className="flex items-center">
                 <button
                   type="button"
-                  onClick={() => setRememberMe(!rememberMe)}
+                  onClick={() => setFormData(prev => ({ ...prev, remember_me: !prev.remember_me }))}
                   className="flex items-center gap-3"
+                  disabled={isLoading}
                 >
                   <div
                     className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-300 ${
-                      rememberMe
+                      formData.remember_me
                         ? "bg-amber-500 border-amber-500"
                         : isDarkMode 
                           ? "bg-gray-700 border-gray-600" 
                           : "bg-white border-gray-300"
                     }`}
                   >
-                    {rememberMe && (
+                    {formData.remember_me && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
@@ -361,17 +377,6 @@ export default function AdminLoginPage() {
                 </button>
               </div>
 
-              {/* Submit Error */}
-              {errors.submit && (
-                <div className={`px-4 py-3 rounded-lg text-sm transition-all duration-500 ${
-                  isDarkMode 
-                    ? "bg-red-900/30 border border-red-800 text-red-300" 
-                    : "bg-red-50 border border-red-200 text-red-700"
-                }`}>
-                  {errors.submit}
-                </div>
-              )}
-
               {/* Submit Button */}
               <button
                 type="submit"
@@ -381,37 +386,37 @@ export default function AdminLoginPage() {
                 {isLoading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Authenticating...
+                    Signing in...
                   </>
                 ) : (
                   <>
                     <LogInIcon size={18} />
-                    Sign in to Dashboard
+                    Sign In to Dashboard
                   </>
                 )}
               </button>
             </form>
 
-            {/* Footer Links */}
-               <div className={`mt-8 pt-8 border-t transition-colors duration-500 ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
-          }`}>
-            <p className={`text-center transition-colors duration-500 ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
+            {/* Sign Up Link */}
+            <div className={`mt-8 pt-8 border-t transition-colors duration-500 ${
+              isDarkMode ? "border-gray-700" : "border-gray-200"
             }`}>
-              Don't have an account?{" "}
-              <Link
-                href="/admin/signup"
-                className={`font-semibold transition-colors duration-300 ${
-                  isDarkMode 
-                    ? "text-amber-400 hover:text-amber-300" 
-                    : "text-amber-600 hover:text-amber-700"
-                }`}
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
+              <p className={`text-center transition-colors duration-500 ${
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              }`}>
+                Don't have an admin account?{" "}
+                <Link
+                  href="/admin/signup"
+                  className={`font-semibold transition-colors duration-300 ${
+                    isDarkMode 
+                      ? "text-amber-400 hover:text-amber-300" 
+                      : "text-amber-600 hover:text-amber-700"
+                  }`}
+                >
+                  Sign up
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -422,7 +427,7 @@ export default function AdminLoginPage() {
           }`}>
             © {new Date().getFullYear()} Admin Portal. Restricted access.
             <br />
-            Unauthorized access is prohibited.
+            Unauthorized access is prohibited. All actions are logged.
           </p>
         </div>
       </div>
