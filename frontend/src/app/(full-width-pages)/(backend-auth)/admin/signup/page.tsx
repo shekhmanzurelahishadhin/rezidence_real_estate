@@ -1,7 +1,7 @@
 // app/(full-width-pages)/(auth)/admin/signup/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,14 +14,14 @@ import {
   CheckIcon,
   SunIcon,
   MoonIcon,
-  UserPlusIcon,
   ShieldIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
-import { apiRequest } from "@/app/lib/api";
+import { useAdminAuth } from "@/app/contexts/AdminAuthContext";
 
 export default function AdminSignUpPage() {
   const router = useRouter();
+  const { register, isAuthenticated, loading: authLoading } = useAdminAuth();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -29,7 +29,7 @@ export default function AdminSignUpPage() {
     phone: "",
     password: "",
     password_confirmation: "",
-    role: "admin", // Default role
+    role: "admin",
     agree_terms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +39,13 @@ export default function AdminSignUpPage() {
   const [apiError, setApiError] = useState("");
   const { isDarkMode, toggleDarkMode } = useTheme();
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/admin');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -46,24 +53,16 @@ export default function AdminSignUpPage() {
     setApiError("");
 
     try {
-      const response = await apiRequest('/admin/register', {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      }, 'admin');
+      const result = await register(formData);
 
-      if (response.success) {
-        // Store token and user data
-        localStorage.setItem('admin_token', response.data.token);
-        localStorage.setItem('admin_roles', JSON.stringify(response.data.roles));
-        localStorage.setItem('admin_permissions', JSON.stringify(response.data.permissions));
-        
-        // Redirect to admin dashboard
-        router.push("/admin");
+      if (result.success) {
+        // No need to redirect here - the useEffect will handle it
+        // when isAuthenticated becomes true
       } else {
-        if (response.errors) {
-          setErrors(response.errors);
+        if (result.errors) {
+          setErrors(result.errors);
         } else {
-          setApiError(response.message || "Registration failed");
+          setApiError(result.message || "Registration failed");
         }
       }
     } catch (error) {
@@ -117,9 +116,9 @@ export default function AdminSignUpPage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/admin" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                <span className="text-white text-xl font-bold">H</span>
+                <span className="text-white text-xl font-bold">A</span>
               </div>
               <div>
                 <h1 className={`text-xl font-bold transition-colors duration-300 ${
@@ -127,20 +126,20 @@ export default function AdminSignUpPage() {
                     ? "text-white group-hover:text-amber-400" 
                     : "text-gray-900 group-hover:text-amber-600"
                 }`}>
-                  Homely Homes Admin
+                  Admin Portal
                 </h1>
               </div>
             </Link>
 
             <Link
-              href="/admin"
+              href="/"
               className={`transition-colors duration-300 ${
                 isDarkMode 
                   ? "text-gray-400 hover:text-amber-400" 
                   : "text-gray-600 hover:text-amber-600"
               }`}
             >
-              ← Back to Admin
+              ← Back to Home
             </Link>
           </div>
         </div>
@@ -350,92 +349,92 @@ export default function AdminSignUpPage() {
 
             {/* Password */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="password"
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Password *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
-                    errors.password ? 'border-red-500' :
-                    isDarkMode 
-                      ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
-                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+              <div>
+                <label
+                  htmlFor="password"
+                  className={`block text-sm font-medium mb-2 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  {showPassword ? (
-                    <EyeOffIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                  ) : (
-                    <EyeIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                  )}
-                </button>
+                  Password *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                      errors.password ? 'border-red-500' :
+                      isDarkMode 
+                        ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
+                        : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                    }`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                    ) : (
+                      <EyeIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-500">{errors.password[0]}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password[0]}</p>
-              )}
-            </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label
-                htmlFor="password_confirmation"
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Confirm Password *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                </div>
-                <input
-                  id="password_confirmation"
-                  name="password_confirmation"
-                  type={showConfirmPassword ? "text" : "password"}
-                  required
-                  value={formData.password_confirmation}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
-                    isDarkMode 
-                      ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
-                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+              {/* Confirm Password */}
+              <div>
+                <label
+                  htmlFor="password_confirmation"
+                  className={`block text-sm font-medium mb-2 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOffIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                  ) : (
-                    <EyeIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                  )}
-                </button>
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                  </div>
+                  <input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={formData.password_confirmation}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                      isDarkMode 
+                        ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
+                        : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
+                    }`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOffIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                    ) : (
+                      <EyeIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
             </div>
 
             {/* Terms Agreement */}
