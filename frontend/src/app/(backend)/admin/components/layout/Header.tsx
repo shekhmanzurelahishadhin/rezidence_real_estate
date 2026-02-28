@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/ThemeProvider";
+import { useAdminAuth } from "@/app/contexts/AdminAuthContext";
 import {
   BellIcon,
   SearchIcon,
@@ -13,77 +14,39 @@ import {
   ChevronDownIcon,
   UserIcon,
   CalendarIcon,
-  FilterIcon,
   SettingsIcon,
   LogOutIcon,
 } from "@/assets/icons";
-import { apiRequest } from "@/app/lib/api";
 
 interface HeaderProps {
   onMenuClick: () => void;
   sidebarOpen: boolean;
 }
 
-interface AdminUser {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  role: string;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
   const router = useRouter();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { admin, logout, loading } = useAdminAuth(); // Use the admin auth context
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [user, setUser] = useState<AdminUser | null>(null);
   const [userInitials, setUserInitials] = useState("AD");
 
-  // Load user data from localStorage on component mount
+  // Generate initials from admin data
   useEffect(() => {
-    const loadUserData = () => {
-      try {
-        // Get user data from localStorage
-        const userDataString = localStorage.getItem('admin_data');
-        const userRolesString = localStorage.getItem('admin_roles');
-        
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-          setUser(userData);
-          
-          // Generate initials from first and last name
-          if (userData.first_name && userData.last_name) {
-            const initials = `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`.toUpperCase();
-            setUserInitials(initials);
-          } else if (userData.first_name) {
-            setUserInitials(userData.first_name.charAt(0).toUpperCase());
-          } else if (userData.email) {
-            setUserInitials(userData.email.charAt(0).toUpperCase());
-          }
-        }
-      } catch (error) {
-        console.error("Error loading user data:", error);
+    if (admin) {
+      if (admin.first_name && admin.last_name) {
+        const initials = `${admin.first_name.charAt(0)}${admin.last_name.charAt(0)}`.toUpperCase();
+        setUserInitials(initials);
+      } else if (admin.first_name) {
+        setUserInitials(admin.first_name.charAt(0).toUpperCase());
+      } else if (admin.name) {
+        setUserInitials(admin.name.charAt(0).toUpperCase());
+      } else if (admin.email) {
+        setUserInitials(admin.email.charAt(0).toUpperCase());
       }
-    };
-
-    loadUserData();
-
-    // Optional: Listen for storage changes (if user updates profile in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'admin_data') {
-        loadUserData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    }
+  }, [admin]);
 
   const notifications = [
     { id: 1, title: "New property listed", time: "5 min ago", unread: true },
@@ -95,106 +58,51 @@ export default function AdminHeader({ onMenuClick, sidebarOpen }: HeaderProps) {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+    setShowUserMenu(false);
     
     try {
-      const token = localStorage.getItem('admin_token');
-      
-      // If no token, just redirect
-      if (!token) {
-        clearAdminData();
-        router.push('/admin/signin');
-        return;
-      }
-
-      // Try to call logout API with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      try {
-        const response = await apiRequest('/admin/logout', {
-          method: 'POST',
-          signal: controller.signal
-        }, 'admin');
-        
-        clearTimeout(timeoutId);
-        
-        if (response && response.success) {
-          clearAdminData();
-          router.push('/admin/signin');
-        } else {
-          // API call succeeded but logout failed
-          clearAdminData();
-          router.push('/admin/signin');
-        }
-      } catch (apiError) {
-        clearTimeout(timeoutId);
-        
-        // If API call fails (including 401), still logout locally
-        console.log('API logout failed, performing local logout:', apiError);
-        clearAdminData();
-        router.push('/admin/signin');
-      }
+      // Use the logout method from AdminAuthContext
+      await logout();
+      // The logout method already redirects to /admin/signin
     } catch (error) {
       console.error('Logout error:', error);
-      clearAdminData();
+      // Force redirect on error
       router.push('/admin/signin');
     } finally {
       setIsLoggingOut(false);
-      setShowUserMenu(false);
     }
   };
-// Helper function to clear admin data
-const clearAdminData = () => {
-  localStorage.removeItem('admin_token');
-  localStorage.removeItem('admin_data');
-  localStorage.removeItem('admin_roles');
-  localStorage.removeItem('admin_permissions');
-};
+
   // Get user's display name and role
   const getUserDisplayName = () => {
-    if (!user) return "Admin User";
+    if (!admin) return "Admin User";
     
-    if (user.first_name && user.last_name) {
-      return `${user.first_name} ${user.last_name}`;
-    } else if (user.first_name) {
-      return user.first_name;
-    } else if (user.email) {
-      return user.email.split('@')[0];
+    if (admin.first_name && admin.last_name) {
+      return `${admin.first_name} ${admin.last_name}`;
+    } else if (admin.first_name) {
+      return admin.first_name;
+    } else if (admin.name) {
+      return admin.name;
+    } else if (admin.email) {
+      return admin.email.split('@')[0];
     }
     return "Admin User";
   };
 
   const getUserRole = () => {
-    if (!user) return "Administrator";
+    if (!admin) return "Administrator";
     
-    // Get from user object
-    if (user.role) {
-      // Format role name (e.g., "super-admin" -> "Super Admin")
-      return user.role
+    if (admin.role) {
+      return admin.role
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
     }
     
-    // Try to get from roles in localStorage
-    try {
-      const rolesString = localStorage.getItem('admin_roles');
-      if (rolesString) {
-        const roles = JSON.parse(rolesString);
-        if (roles && roles.length > 0) {
-          return roles[0]
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-        }
-      }
-    } catch (error) {
-      console.error("Error parsing roles:", error);
-    }
-    
     return "Administrator";
   };
 
+  // Rest of your component remains the same...
   return (
     <header
       className={`sticky top-0 z-30 border-b transition-all duration-500 ${
@@ -203,8 +111,9 @@ const clearAdminData = () => {
           : "bg-white/95 backdrop-blur-sm border-gray-200"
       }`}
     >
+      {/* ... rest of your JSX remains exactly the same ... */}
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-        {/* Left Section */}
+        {/* Left Section - unchanged */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
@@ -382,7 +291,7 @@ const clearAdminData = () => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300"
               aria-label="User menu"
-              disabled={isLoggingOut}
+              disabled={isLoggingOut || loading}
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                 <span className="text-white text-sm font-bold">{userInitials}</span>
@@ -432,7 +341,7 @@ const clearAdminData = () => {
                     <p className={`text-sm transition-colors duration-500 ${
                       isDarkMode ? "text-gray-400" : "text-gray-500"
                     }`}>
-                      {user?.email || "admin@example.com"}
+                      {admin?.email || "admin@example.com"}
                     </p>
                     <p className={`text-xs mt-1 transition-colors duration-500 ${
                       isDarkMode ? "text-amber-400" : "text-amber-600"

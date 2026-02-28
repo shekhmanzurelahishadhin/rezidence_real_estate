@@ -1,7 +1,7 @@
 // app/(full-width-pages)/(auth)/admin/signin/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,10 +17,11 @@ import {
   ArrowLeftIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
-import { apiRequest } from "@/app/lib/api";
+import { useAdminAuth } from "@/app/contexts/AdminAuthContext";
 
 export default function AdminSignInPage() {
   const router = useRouter();
+  const { login, isAuthenticated, loading: authLoading } = useAdminAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,6 +33,13 @@ export default function AdminSignInPage() {
   const [apiError, setApiError] = useState("");
   const { isDarkMode, toggleDarkMode } = useTheme();
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/admin');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -39,34 +47,21 @@ export default function AdminSignInPage() {
     setApiError("");
 
     try {
-      const response = await apiRequest('/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      }, 'admin');
+      const result = await login(formData.email, formData.password);
 
-      if (response.success) {
-        console.log("Login successful:", response);
-        // Store token and user data
-        localStorage.setItem('admin_token', response.data.token);
-        localStorage.setItem('admin_data', JSON.stringify(response.data.admin));
-        localStorage.setItem('admin_roles', JSON.stringify(response.data.roles || []));
-        localStorage.setItem('admin_permissions', JSON.stringify(response.data.permissions || []));
-        
+      if (result.success) {
         // Set remember me preference
         if (formData.remember_me) {
           localStorage.setItem('admin_remember', 'true');
         }
         
-        // Redirect to admin dashboard
-        router.push("/admin");
+        // No need to redirect here - the useEffect will handle it
+        // when isAuthenticated becomes true
       } else {
-        if (response.errors) {
-          setErrors(response.errors);
+        if (result.errors) {
+          setErrors(result.errors);
         } else {
-          setApiError(response.message || "Invalid credentials");
+          setApiError(result.message || "Invalid credentials");
         }
       }
     } catch (error: any) {
@@ -125,7 +120,7 @@ export default function AdminSignInPage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/admin" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                 <span className="text-white text-xl font-bold">A</span>
               </div>
@@ -154,7 +149,7 @@ export default function AdminSignInPage() {
               }`}
             >
               <ArrowLeftIcon size={16} />
-              Back to Admin
+              Back to Home
             </Link>
           </div>
         </div>
@@ -169,7 +164,7 @@ export default function AdminSignInPage() {
               : "bg-amber-50 text-amber-700 border border-amber-200"
           }`}>
             <ShieldIcon size={14} />
-            <span>Restricted Access</span>
+            <span>Admin Restricted Access</span>
             <span className={`w-2 h-2 rounded-full animate-pulse ${
               isDarkMode ? "bg-amber-400" : "bg-amber-400"
             }`} />
@@ -182,7 +177,7 @@ export default function AdminSignInPage() {
           <p className={`transition-colors duration-500 ${
             isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}>
-            Enter your credentials to access the admin dashboard
+            Enter your admin credentials to access the admin dashboard
           </p>
         </div>
 
@@ -208,7 +203,7 @@ export default function AdminSignInPage() {
                   <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${
                     isDarkMode ? "text-amber-300" : "text-amber-700"
                   }`}>
-                    Demo Credentials
+                    Demo Admin Credentials
                   </p>
                   <p className={`text-xs transition-colors duration-500 ${
                     isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -242,7 +237,7 @@ export default function AdminSignInPage() {
                     isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}
                 >
-                  Email Address
+                  Admin Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -413,7 +408,7 @@ export default function AdminSignInPage() {
                       : "text-amber-600 hover:text-amber-700"
                   }`}
                 >
-                  Sign up
+                  Create admin account
                 </Link>
               </p>
             </div>
@@ -425,7 +420,7 @@ export default function AdminSignInPage() {
           <p className={`text-xs transition-colors duration-500 ${
             isDarkMode ? "text-gray-500" : "text-gray-400"
           }`}>
-            © {new Date().getFullYear()} Admin Portal. Restricted access.
+            © {new Date().getFullYear()} Admin Portal. Restricted to administrators only.
             <br />
             Unauthorized access is prohibited. All actions are logged.
           </p>
