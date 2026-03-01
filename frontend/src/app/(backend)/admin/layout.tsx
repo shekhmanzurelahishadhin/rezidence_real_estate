@@ -8,6 +8,7 @@ import { useTheme } from "@/app/ThemeProvider";
 import '../../../styles/globals.css'; // Make sure this imports your CSS file
 import { useAdminAuth } from "@/app/contexts/AdminAuthContext";
 import { useRouter } from "next/navigation";
+import AuthLoader from "./components/ui/AuthLoader";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,13 +79,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className={`fixed inset-0 flex items-center justify-center transition-all duration-500 z-50 ${
         isDarkMode ? "bg-gray-900" : "bg-gray-50"
       }`}>
-        <div className="text-center">
-          <p className={`text-sm ${
-            isDarkMode ? "text-gray-400" : "text-gray-500"
-          }`}>
-            Redirecting to login...
-          </p>
-        </div>
+        <AuthLoader isDarkMode={isDarkMode} />
       </div>
     );
   }

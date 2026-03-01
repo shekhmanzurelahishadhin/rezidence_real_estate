@@ -6,6 +6,8 @@ import "../../styles/globals.css";
 import { useEffect } from "react";
 import { useAdminAuth } from "../contexts/AdminAuthContext";
 import { useRouter } from "next/navigation";
+import AuthLoader from "../(backend)/admin/components/ui/AuthLoader";
+import { useTheme } from "../ThemeProvider";
 
 // const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +22,7 @@ export default function FullWidthLayout({
   children: React.ReactNode;
 }>) {
       const { isAuthenticated, loading } = useAdminAuth();
+      const { isDarkMode } = useTheme();
       const router = useRouter();
    useEffect(() => {
     if (isAuthenticated) {
@@ -28,9 +31,7 @@ export default function FullWidthLayout({
   }, [isAuthenticated, router]);
   if (loading || isAuthenticated) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900 z-50">
-        <h1>Loading...</h1>
-      </div>
+      <AuthLoader isDarkMode={isDarkMode} message={loading ? "Loading..." : "Redirecting..."} />
     );
   }
   return (
