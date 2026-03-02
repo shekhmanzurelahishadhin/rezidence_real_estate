@@ -14,7 +14,6 @@ import {
   CheckIcon,
   SunIcon,
   MoonIcon,
-  UserPlusIcon,
   ShieldIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
@@ -23,13 +22,11 @@ import { apiRequest } from "../../../../app/lib/api";
 export default function AdminSignUpPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
+    name: "",
     email: "",
     phone: "",
     password: "",
     password_confirmation: "",
-    role: "admin", // Default role
     agree_terms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -46,19 +43,20 @@ export default function AdminSignUpPage() {
     setApiError("");
 
     try {
-      const response = await apiRequest('/admin/register', {
+      const response = await apiRequest('/client/register', {
         method: 'POST',
         body: JSON.stringify(formData),
-      }, 'admin');
+      });
 
       if (response.success) {
         // Store token and user data
-        localStorage.setItem('admin_token', response.data.token);
-        localStorage.setItem('admin_roles', JSON.stringify(response.data.roles));
-        localStorage.setItem('admin_permissions', JSON.stringify(response.data.permissions));
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user_data', JSON.stringify(response.data.client));
+        localStorage.setItem('user_roles', JSON.stringify(response.data.roles));
+        localStorage.setItem('user_permissions', JSON.stringify(response.data.permissions));
         
-        // Redirect to admin dashboard
-        router.push("/admin");
+        router.push("/");
+      
       } else {
         if (response.errors) {
           setErrors(response.errors);
@@ -73,7 +71,7 @@ export default function AdminSignUpPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
@@ -93,7 +91,7 @@ export default function AdminSignUpPage() {
       isDarkMode ? "bg-gray-900" : "bg-white"
     }`}>
       {/* Floating Buttons */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="floating-buttons-container">
         <button
           onClick={toggleDarkMode}
           className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
@@ -127,20 +125,20 @@ export default function AdminSignUpPage() {
                     ? "text-white group-hover:text-amber-400" 
                     : "text-gray-900 group-hover:text-amber-600"
                 }`}>
-                  Homely Homes Admin
+                  Homely Homes
                 </h1>
               </div>
             </Link>
 
             <Link
-              href="/admin"
+              href="/"
               className={`transition-colors duration-300 ${
                 isDarkMode 
                   ? "text-gray-400 hover:text-amber-400" 
                   : "text-gray-600 hover:text-amber-600"
               }`}
             >
-              ← Back to Admin
+              ← Back to Home
             </Link>
           </div>
         </div>
@@ -155,17 +153,17 @@ export default function AdminSignUpPage() {
               : "bg-blue-50 text-blue-700 border border-blue-200"
           }`}>
             <ShieldIcon size={14} />
-            <span>Admin Registration</span>
+            <span>User Registration</span>
           </div>
           <h1 className={`text-3xl font-bold mb-3 transition-colors duration-500 ${
             isDarkMode ? "text-white" : "text-gray-900"
           }`}>
-            Create Admin Account
+            Create User Account
           </h1>
           <p className={`transition-colors duration-500 ${
             isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}>
-            Register as an administrator to manage the platform
+            Register to access premium features
           </p>
         </div>
 
@@ -186,69 +184,39 @@ export default function AdminSignUpPage() {
               </div>
             )}
 
-            {/* First Name */}
+            {/* Full Name */}
             <div>
               <label
-                htmlFor="first_name"
+                htmlFor="name"
                 className={`block text-sm font-medium mb-2 ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
-                First Name *
+                Full Name *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <UserIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
                 </div>
                 <input
-                  id="first_name"
-                  name="first_name"
+                  id="name"
+                  name="name"
                   type="text"
                   required
-                  value={formData.first_name}
+                  value={formData.name}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
-                    errors.first_name ? 'border-red-500' : 
+                    errors.name ? 'border-red-500' : 
                     isDarkMode 
                       ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
                       : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
                   }`}
-                  placeholder="John"
+                  placeholder="John Doe"
                 />
               </div>
-              {errors.first_name && (
-                <p className="mt-1 text-xs text-red-500">{errors.first_name[0]}</p>
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-500">{errors.name[0]}</p>
               )}
-            </div>
-
-            {/* Last Name */}
-            <div>
-              <label
-                htmlFor="last_name"
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Last Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <UserIcon size={20} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
-                </div>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
-                    isDarkMode 
-                      ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
-                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
-                  }`}
-                  placeholder="Doe"
-                />
-              </div>
             </div>
 
             {/* Email */}
@@ -278,7 +246,7 @@ export default function AdminSignUpPage() {
                       ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
                       : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
                   }`}
-                  placeholder="admin@example.com"
+                  placeholder="user@example.com"
                 />
               </div>
               {errors.email && (
@@ -316,39 +284,8 @@ export default function AdminSignUpPage() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div>
-              <label
-                htmlFor="role"
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Admin Role *
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
-                  isDarkMode 
-                    ? "bg-gray-700 border border-gray-600 text-white focus:border-amber-500" 
-                    : "bg-white border border-gray-300 text-gray-900 focus:border-amber-500"
-                }`}
-              >
-                <option value="admin">Admin</option>
-                <option value="moderator">Moderator</option>
-                <option value="super-admin">Super Admin</option>
-              </select>
-              <p className={`mt-1 text-xs ${
-                isDarkMode ? "text-gray-500" : "text-gray-500"
-              }`}>
-                Select the appropriate role based on responsibilities
-              </p>
-            </div>
-
             {/* Password */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="password"
@@ -435,6 +372,7 @@ export default function AdminSignUpPage() {
                 </button>
               </div>
             </div>
+            </div>
 
             {/* Terms Agreement */}
             <div className="flex items-start">
@@ -488,27 +426,6 @@ export default function AdminSignUpPage() {
               <p className="mt-1 text-xs text-red-500">{errors.agree_terms[0]}</p>
             )}
 
-            {/* Role Info Box */}
-            <div className={`p-4 rounded-lg ${
-              isDarkMode 
-                ? "bg-blue-900/20 border border-blue-800" 
-                : "bg-blue-50 border border-blue-200"
-            }`}>
-              <h4 className={`text-sm font-medium mb-2 flex items-center gap-2 ${
-                isDarkMode ? "text-blue-300" : "text-blue-700"
-              }`}>
-                <ShieldIcon size={16} />
-                Role-Based Permissions:
-              </h4>
-              <ul className={`text-xs space-y-1 ${
-                isDarkMode ? "text-blue-200" : "text-blue-600"
-              }`}>
-                <li>• Super Admin: Full system access</li>
-                <li>• Admin: Manage properties, users, and content</li>
-                <li>• Moderator: Moderate content and reviews</li>
-              </ul>
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
@@ -518,10 +435,10 @@ export default function AdminSignUpPage() {
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating Admin Account...
+                  Creating Account...
                 </>
               ) : (
-                "Create Admin Account"
+                "Create Account"
               )}
             </button>
           </form>
@@ -533,9 +450,9 @@ export default function AdminSignUpPage() {
             <p className={`text-center ${
               isDarkMode ? "text-gray-400" : "text-gray-600"
             }`}>
-              Already have an admin account?{" "}
+              Already have an account?{" "}
               <Link
-                href="/admin/signin"
+                href="/signin"
                 className={`font-semibold ${
                   isDarkMode 
                     ? "text-amber-400 hover:text-amber-300" 
@@ -546,15 +463,6 @@ export default function AdminSignUpPage() {
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className={`text-sm ${
-            isDarkMode ? "text-gray-500" : "text-gray-400"
-          }`}>
-            This area is restricted to authorized personnel only
-          </p>
         </div>
       </div>
     </div>

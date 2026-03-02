@@ -1,10 +1,10 @@
+// app/(full-width-pages)/(auth)/signin/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  HomeIcon,
   MailIcon,
   LockIcon,
   EyeIcon,
@@ -25,22 +25,48 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [apiError, setApiError] = useState("");
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
+    setErrors({});
+    setApiError("");
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (formData.email.includes("@") && formData.password.length >= 6) {
-        router.push("/dashboard");
+    try {
+      const response = await fetch('http://localhost:8000/api/client/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token and user data
+        localStorage.setItem('auth_token', data.data.token);
+        localStorage.setItem('user_data', JSON.stringify(data.data.client));
+        localStorage.setItem('user_roles', JSON.stringify(data.data.roles));
+        localStorage.setItem('user_permissions', JSON.stringify(data.data.permissions));
+        
+        router.push("/");
       } else {
-        setError("Invalid credentials. Please try again.");
+        if (data.errors) {
+          setErrors(data.errors);
+        } else {
+          setApiError(data.message || "Login failed");
+        }
       }
-    }, 1500);
+    } catch (error) {
+      setApiError("Network error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,32 +75,19 @@ export default function SignInPage() {
     }`}>
       {/* Floating Buttons */}
       <div className="floating-buttons-container">
-        {/* Dark/Light Mode Toggle */}
         <button
           onClick={toggleDarkMode}
           className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
-          aria-label={
-            isDarkMode ? "Switch to light mode" : "Switch to dark mode"
-          }
           style={{
             background: isDarkMode
               ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
               : "linear-gradient(135deg, #e8a838, #f97316)",
           }}
         >
-          <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {isDarkMode ? (
-            <SunIcon
-              size={20}
-              color="white"
-              className="group-hover:rotate-180 transition-transform duration-500"
-            />
+            <SunIcon size={20} color="white" />
           ) : (
-            <MoonIcon
-              size={20}
-              color="white"
-              className="group-hover:rotate-180 transition-transform duration-500"
-            />
+            <MoonIcon size={20} color="white" />
           )}
         </button>
       </div>
@@ -126,8 +139,8 @@ export default function SignInPage() {
         <div className="text-center mb-10">
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6 transition-all duration-500 ${
             isDarkMode 
-              ? "bg-amber-900/30 text-amber-300" 
-              : "bg-amber-50 text-amber-700"
+              ? "bg-amber-900/30 text-amber-300 border border-amber-800" 
+              : "bg-amber-50 text-amber-700 border border-amber-200"
           }`}>
             <span className={`w-2 h-2 rounded-full animate-pulse ${
               isDarkMode ? "bg-amber-400" : "bg-amber-400"
@@ -152,13 +165,14 @@ export default function SignInPage() {
             : "bg-white border border-gray-200"
         }`}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
+            {/* API Error Message */}
+            {apiError && (
               <div className={`px-4 py-3 rounded-lg text-sm transition-all duration-500 ${
                 isDarkMode 
                   ? "bg-red-900/30 border border-red-800 text-red-300" 
                   : "bg-red-50 border border-red-200 text-red-700"
               }`}>
-                {error}
+                {apiError}
               </div>
             )}
 
@@ -181,6 +195,7 @@ export default function SignInPage() {
                 </div>
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   required
                   value={formData.email}
@@ -188,6 +203,7 @@ export default function SignInPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className={`w-full pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                    errors.email ? 'border-red-500' :
                     isDarkMode 
                       ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20" 
                       : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
@@ -195,6 +211,9 @@ export default function SignInPage() {
                   placeholder="you@example.com"
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">{errors.email[0]}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -229,6 +248,7 @@ export default function SignInPage() {
                 </div>
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   value={formData.password}
@@ -236,12 +256,12 @@ export default function SignInPage() {
                     setFormData({ ...formData, password: e.target.value })
                   }
                   className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                    errors.password ? 'border-red-500' :
                     isDarkMode 
                       ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20" 
                       : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
                   }`}
                   placeholder="Enter your password"
-                  minLength={6}
                 />
                 <button
                   type="button"
@@ -261,6 +281,9 @@ export default function SignInPage() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password[0]}</p>
+              )}
             </div>
 
             {/* Remember Me */}

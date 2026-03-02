@@ -12,17 +12,16 @@ use Spatie\Permission\Traits\HasPermissions;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasPermissions;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
-        'full_name',
+        'name',
         'email',
         'password',
-        'user_type', // buyer, seller, investor, agent
         'phone',
-        'is_active',
-        'agree_terms',
+        'email_verified_at',
     ];
+
 
     protected $hidden = [
         'password',
@@ -31,8 +30,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'is_active' => 'boolean',
-        'agree_terms' => 'boolean',
+        'password' => 'hashed',
     ];
 
     /**

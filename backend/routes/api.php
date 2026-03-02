@@ -29,7 +29,7 @@ Route::prefix('client')->group(function () {
     Route::post('/register', [ClientAuthController::class, 'register']);
     Route::post('/login', [ClientAuthController::class, 'login']);
 
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [ClientAuthController::class, 'logout']);
         Route::get('/me', [ClientAuthController::class, 'me']);
 
