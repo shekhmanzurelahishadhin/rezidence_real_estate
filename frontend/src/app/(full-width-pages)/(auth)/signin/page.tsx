@@ -1,7 +1,7 @@
 // app/(full-width-pages)/(auth)/signin/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import {
   MoonIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
+import { useClientAuth } from "@/app/contexts/ClientAuthContext";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -28,8 +29,41 @@ export default function SignInPage() {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
   const { isDarkMode, toggleDarkMode } = useTheme();
+   const { login, loading, isAuthenticated } = useClientAuth();
+ // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
+  // Show loading or null while checking authentication
+  // Show loading or null while checking authentication
+if (isAuthenticated) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${
+      isDarkMode ? "bg-gray-900" : "bg-white"
+    }`}>
+      <div className="text-center">
+        {/* Spinner with theme support */}
+        <div className={`w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4 ${
+          isDarkMode 
+            ? "border-amber-900/30 border-t-amber-400" 
+            : "border-amber-200 border-t-amber-600"
+        }`} />
+        
+        {/* Loading text with theme support */}
+        <p className={`text-sm font-medium transition-colors duration-500 ${
+          isDarkMode ? "text-gray-400" : "text-gray-600"
+        }`}>
+          Redirecting...
+        </p>
+      </div>
+    </div>
+  );
+}
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
@@ -49,7 +83,7 @@ export default function SignInPage() {
 
       if (data.success) {
         // Store token and user data
-        localStorage.setItem('auth_token', data.data.token);
+        localStorage.setItem('user_token', data.data.token);
         localStorage.setItem('user_data', JSON.stringify(data.data.client));
         localStorage.setItem('user_roles', JSON.stringify(data.data.roles));
         localStorage.setItem('user_permissions', JSON.stringify(data.data.permissions));

@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "../styles/globals.css";
 import { ThemeProvider } from "./ThemeProvider";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import { ClientAuthProvider } from "./contexts/ClientAuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,7 +34,11 @@ export default function FullWidthLayout({
       </head>
       <body>
         <ThemeProvider>
-          <AdminAuthProvider>{children}</AdminAuthProvider>
+          <AdminAuthProvider>
+            <ClientAuthProvider>
+            {children}
+            </ClientAuthProvider>
+            </AdminAuthProvider>
         </ThemeProvider>
       </body>
     </html>
