@@ -38,7 +38,6 @@ export default function SignInPage() {
   }, [isAuthenticated, router]);
 
   // Show loading or null while checking authentication
-  // Show loading or null while checking authentication
 if (isAuthenticated) {
   return (
     <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${

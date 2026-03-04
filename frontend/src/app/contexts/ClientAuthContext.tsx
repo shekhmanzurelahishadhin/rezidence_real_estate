@@ -94,9 +94,9 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
         setPermissions(permissionsData);
         
         // Also store in localStorage for persistence
-        localStorage.setItem('client_data', JSON.stringify(clientData));
-        localStorage.setItem('client_roles', JSON.stringify(rolesData));
-        localStorage.setItem('client_permissions', JSON.stringify(permissionsData));
+        localStorage.setItem('user_data', JSON.stringify(clientData));
+        localStorage.setItem('user_roles', JSON.stringify(rolesData));
+        localStorage.setItem('user_permissions', JSON.stringify(permissionsData));
         
         // Update cookie for middleware
         document.cookie = `user_token=${token}; path=/; max-age=86400; SameSite=Lax`;
@@ -114,10 +114,10 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
 
   const clearAuthData = () => {
     localStorage.removeItem('user_token');
-    localStorage.removeItem('client_data');
-    localStorage.removeItem('client_roles');
-    localStorage.removeItem('client_permissions');
-    localStorage.removeItem('client_remember');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('user_roles');
+    localStorage.removeItem('user_permissions');
+    localStorage.removeItem('user_remember');
     document.cookie = 'user_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     setClient(null);
     setRoles([]);
@@ -152,12 +152,12 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
 
         // Store in localStorage
         localStorage.setItem('user_token', token);
-        localStorage.setItem('client_data', JSON.stringify(clientData));
-        localStorage.setItem('client_roles', JSON.stringify(userRoles));
-        localStorage.setItem('client_permissions', JSON.stringify(userPermissions));
+        localStorage.setItem('user_data', JSON.stringify(clientData));
+        localStorage.setItem('user_roles', JSON.stringify(userRoles));
+        localStorage.setItem('user_permissions', JSON.stringify(userPermissions));
         
         if (remember) {
-          localStorage.setItem('client_remember', 'true');
+          localStorage.setItem('user_remember', 'true');
         }
 
         // Set cookie for middleware
@@ -208,9 +208,9 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
 
         // Store in localStorage
         localStorage.setItem('user_token', token);
-        localStorage.setItem('client_data', JSON.stringify(newClient));
-        localStorage.setItem('client_roles', JSON.stringify(userRoles));
-        localStorage.setItem('client_permissions', JSON.stringify(userPermissions));
+        localStorage.setItem('user_data', JSON.stringify(newClient));
+        localStorage.setItem('user_roles', JSON.stringify(userRoles));
+        localStorage.setItem('user_permissions', JSON.stringify(userPermissions));
 
         // Set cookie for middleware
         document.cookie = `user_token=${token}; path=/; max-age=86400; SameSite=Lax`;
@@ -283,9 +283,9 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
         setPermissions(permissionsData);
         
         // Update localStorage
-        localStorage.setItem('client_data', JSON.stringify(clientData));
-        localStorage.setItem('client_roles', JSON.stringify(rolesData));
-        localStorage.setItem('client_permissions', JSON.stringify(permissionsData));
+        localStorage.setItem('user_data', JSON.stringify(clientData));
+        localStorage.setItem('user_roles', JSON.stringify(rolesData));
+        localStorage.setItem('user_permissions', JSON.stringify(permissionsData));
       }
     } catch (error) {
       console.error('Failed to refresh client:', error);
