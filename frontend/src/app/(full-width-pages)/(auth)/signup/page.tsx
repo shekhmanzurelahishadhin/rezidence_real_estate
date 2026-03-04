@@ -1,7 +1,7 @@
-// app/(full-width-pages)/(auth)/admin/signup/page.tsx
+// app/(full-width-pages)/(auth)/signup/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,12 +14,13 @@ import {
   CheckIcon,
   SunIcon,
   MoonIcon,
-  ShieldIcon,
+  UserPlusIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
+import { useClientAuth } from "@/app/contexts/ClientAuthContext";
 import { apiRequest } from "../../../../app/lib/api";
 
-export default function AdminSignUpPage() {
+export default function ClientSignUpPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -35,6 +36,41 @@ export default function AdminSignUpPage() {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { client, isAuthenticated, loading: authLoading } = useClientAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${
+        isDarkMode ? "bg-gray-900" : "bg-white"
+      }`}>
+        <div className="text-center">
+          <div className={`w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4 ${
+            isDarkMode 
+              ? "border-amber-900/30 border-t-amber-400" 
+              : "border-amber-200 border-t-amber-600"
+          }`} />
+          <p className={`text-sm font-medium transition-colors duration-500 ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}>
+            Checking authentication...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated, don't render the form (will redirect)
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,21 +78,29 @@ export default function AdminSignUpPage() {
     setErrors({});
     setApiError("");
 
+    // Password confirmation validation
+    if (formData.password !== formData.password_confirmation) {
+      setErrors({
+        password_confirmation: ["Passwords do not match"]
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await apiRequest('/client/register', {
         method: 'POST',
         body: JSON.stringify(formData),
-      });
+      }, 'client');
 
       if (response.success) {
-        // Store token and user data
-        localStorage.setItem('auth_token', response.data.token);
+        // Store user data
+        localStorage.setItem('user_token', response.data.token);
         localStorage.setItem('user_data', JSON.stringify(response.data.client));
         localStorage.setItem('user_roles', JSON.stringify(response.data.roles));
         localStorage.setItem('user_permissions', JSON.stringify(response.data.permissions));
         
         router.push("/");
-      
       } else {
         if (response.errors) {
           setErrors(response.errors);
@@ -115,7 +159,7 @@ export default function AdminSignUpPage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/admin" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                 <span className="text-white text-xl font-bold">H</span>
               </div>
@@ -127,6 +171,11 @@ export default function AdminSignUpPage() {
                 }`}>
                   Homely Homes
                 </h1>
+                <p className={`text-xs transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-500"
+                }`}>
+                  Premium Real Estate
+                </p>
               </div>
             </Link>
 
@@ -149,21 +198,21 @@ export default function AdminSignUpPage() {
         <div className="text-center mb-10">
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6 transition-all duration-500 ${
             isDarkMode 
-              ? "bg-blue-900/30 text-blue-300 border border-blue-800" 
-              : "bg-blue-50 text-blue-700 border border-blue-200"
+              ? "bg-amber-900/30 text-amber-300 border border-amber-800" 
+              : "bg-amber-50 text-amber-700 border border-amber-200"
           }`}>
-            <ShieldIcon size={14} />
-            <span>User Registration</span>
+            <UserPlusIcon size={14} />
+            <span>Create Account</span>
           </div>
           <h1 className={`text-3xl font-bold mb-3 transition-colors duration-500 ${
             isDarkMode ? "text-white" : "text-gray-900"
           }`}>
-            Create User Account
+            Join Homely Homes
           </h1>
           <p className={`transition-colors duration-500 ${
             isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}>
-            Register to access premium features
+            Create your account to start your property journey
           </p>
         </div>
 
@@ -353,6 +402,7 @@ export default function AdminSignUpPage() {
                   value={formData.password_confirmation}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-12 py-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
+                    errors.password_confirmation ? 'border-red-500' :
                     isDarkMode 
                       ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500" 
                       : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500"
@@ -371,6 +421,9 @@ export default function AdminSignUpPage() {
                   )}
                 </button>
               </div>
+              {errors.password_confirmation && (
+                <p className="mt-1 text-xs text-red-500">{errors.password_confirmation[0]}</p>
+              )}
             </div>
             </div>
 
