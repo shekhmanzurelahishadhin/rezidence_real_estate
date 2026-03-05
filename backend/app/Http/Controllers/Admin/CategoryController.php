@@ -4,11 +4,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
@@ -66,7 +66,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => CategoryResource::collection($categories),
+            'data' => $categories,
             'message' => 'Categories retrieved successfully'
         ]);
     }
@@ -76,29 +76,64 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories',
-            'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'status' => 'required|in:active,inactive,pending,archived',
-            'featured' => 'boolean'
-        ]);
+        try {
+            // Log the request data for debugging
+            \Log::info('Category store request', [
+                'all' => $request->all(),
+                'files' => $request->allFiles(),
+                'method' => $request->method(),
+                'content_type' => $request->header('Content-Type')
+            ]);
 
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('categories', 'public');
-            $validated['image'] = $path;
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:categories',
+                'description' => 'nullable|string',
+                'icon' => 'nullable|string|max:50',
+                'color' => 'nullable|string|max:50',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'status' => 'required|in:active,inactive,pending,archived',
+                'featured' => 'boolean'
+            ]);
+
+            // Handle boolean conversion
+            $validated['featured'] = filter_var($request->input('featured', false), FILTER_VALIDATE_BOOLEAN);
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('categories', 'public');
+                $validated['image'] = $path;
+            }
+
+            // Auto-generate slug
+            $validated['slug'] = Str::slug($validated['name']);
+
+            $category = Category::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'data' => $category,
+                'message' => 'Category created successfully'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed', $e->errors());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Category creation failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create category: ' . $e->getMessage()
+            ], 500);
         }
-
-        $category = Category::create($validated);
-
-        return response()->json([
-            'success' => true,
-            'data' => new CategoryResource($category),
-            'message' => 'Category created successfully'
-        ], 201);
     }
 
     /**
@@ -110,7 +145,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new CategoryResource($category),
+            'data' => $category,
             'message' => 'Category retrieved successfully'
         ]);
     }
@@ -120,34 +155,72 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255|unique:categories,name,' . $category->id,
-            'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'status' => 'sometimes|required|in:active,inactive,pending,archived',
-            'featured' => 'boolean'
-        ]);
+        try {
+            \Log::info('Category update request', [
+                'id' => $category->id,
+                'all' => $request->all(),
+                'files' => $request->allFiles(),
+                'method' => $request->method()
+            ]);
 
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            // Delete old image
-            if ($category->image) {
-                Storage::disk('public')->delete($category->image);
+            $validated = $request->validate([
+                'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('categories')->ignore($category->id)],
+                'description' => 'nullable|string',
+                'icon' => 'nullable|string|max:50',
+                'color' => 'nullable|string|max:50',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'status' => 'sometimes|required|in:active,inactive,pending,archived',
+                'featured' => 'boolean'
+            ]);
+
+            // Handle boolean conversion
+            if ($request->has('featured')) {
+                $validated['featured'] = filter_var($request->input('featured'), FILTER_VALIDATE_BOOLEAN);
             }
 
-            $path = $request->file('image')->store('categories', 'public');
-            $validated['image'] = $path;
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                // Delete old image
+                if ($category->image) {
+                    Storage::disk('public')->delete($category->image);
+                }
+
+                $path = $request->file('image')->store('categories', 'public');
+                $validated['image'] = $path;
+            }
+
+            // Update slug if name changed
+            if (isset($validated['name']) && $validated['name'] !== $category->name) {
+                $validated['slug'] = Str::slug($validated['name']);
+            }
+
+            $category->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'data' => $category,
+                'message' => 'Category updated successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Update validation failed', $e->errors());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Category update failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update category: ' . $e->getMessage()
+            ], 500);
         }
-
-        $category->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'data' => new CategoryResource($category),
-            'message' => 'Category updated successfully'
-        ]);
     }
 
     /**
@@ -155,25 +228,38 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        // Check if category has properties
-        if ($category->property_count > 0) {
+        try {
+            // Check if category has properties
+            if ($category->property_count > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete category with associated properties'
+                ], 422);
+            }
+
+            // Delete image
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+
+            $category->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Category deletion failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete category with associated properties'
-            ], 422);
+                'message' => 'Failed to delete category: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Delete image
-        if ($category->image) {
-            Storage::disk('public')->delete($category->image);
-        }
-
-        $category->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Category deleted successfully'
-        ]);
     }
 
     /**
@@ -181,37 +267,56 @@ class CategoryController extends Controller
      */
     public function bulkDestroy(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:categories,id'
-        ]);
+        try {
+            $request->validate([
+                'ids' => 'required|array',
+                'ids.*' => 'exists:categories,id'
+            ]);
 
-        // Check if any category has properties
-        $categoriesWithProperties = Category::whereIn('id', $request->ids)
-            ->where('property_count', '>', 0)
-            ->count();
+            // Check if any category has properties
+            $categoriesWithProperties = Category::whereIn('id', $request->ids)
+                ->where('property_count', '>', 0)
+                ->count();
 
-        if ($categoriesWithProperties > 0) {
+            if ($categoriesWithProperties > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete categories with associated properties'
+                ], 422);
+            }
+
+            // Delete images
+            $categories = Category::whereIn('id', $request->ids)->get();
+            foreach ($categories as $category) {
+                if ($category->image) {
+                    Storage::disk('public')->delete($category->image);
+                }
+            }
+
+            Category::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Categories deleted successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete categories with associated properties'
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
             ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Bulk deletion failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete categories: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Delete images
-        $categories = Category::whereIn('id', $request->ids)->get();
-        foreach ($categories as $category) {
-            if ($category->image) {
-                Storage::disk('public')->delete($category->image);
-            }
-        }
-
-        Category::whereIn('id', $request->ids)->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Categories deleted successfully'
-        ]);
     }
 
     /**
@@ -219,15 +324,28 @@ class CategoryController extends Controller
      */
     public function toggleFeatured(Category $category)
     {
-        $category->update([
-            'featured' => !$category->featured
-        ]);
+        try {
+            $category->update([
+                'featured' => !$category->featured
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => new CategoryResource($category),
-            'message' => $category->featured ? 'Category featured' : 'Category unfeatured'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $category,
+                'message' => $category->featured ? 'Category featured' : 'Category unfeatured'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Toggle featured failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to toggle featured status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -235,19 +353,38 @@ class CategoryController extends Controller
      */
     public function updateStatus(Request $request, Category $category)
     {
-        $request->validate([
-            'status' => 'required|in:active,inactive,pending,archived'
-        ]);
+        try {
+            $request->validate([
+                'status' => 'required|in:active,inactive,pending,archived'
+            ]);
 
-        $category->update([
-            'status' => $request->status
-        ]);
+            $category->update([
+                'status' => $request->status
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => new CategoryResource($category),
-            'message' => 'Category status updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $category,
+                'message' => 'Category status updated successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Status update failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -255,14 +392,28 @@ class CategoryController extends Controller
      */
     public function getDropdown()
     {
-        $categories = Category::active()
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'property_count']);
+        try {
+            $categories = Category::active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug', 'property_count']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $categories,
+                'message' => 'Categories retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Dropdown fetch failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -270,17 +421,31 @@ class CategoryController extends Controller
      */
     public function getStats()
     {
-        $stats = [
-            'total' => Category::count(),
-            'active' => Category::where('status', 'active')->count(),
-            'featured' => Category::where('featured', true)->count(),
-            'pending' => Category::where('status', 'pending')->count(),
-            'total_properties' => Category::sum('property_count')
-        ];
+        try {
+            $stats = [
+                'total' => Category::count(),
+                'active' => Category::where('status', 'active')->count(),
+                'featured' => Category::where('featured', true)->count(),
+                'pending' => Category::where('status', 'pending')->count(),
+                'total_properties' => Category::sum('property_count')
+            ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Stats retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Stats fetch failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch stats: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

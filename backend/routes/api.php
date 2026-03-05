@@ -1,4 +1,5 @@
 <?php
+// routes/api.php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -9,7 +10,7 @@ use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Client\ClientController;
 
-// Admin Auth Routes (using admin guard)
+// Admin Auth Routes
 Route::prefix('admin')->group(function () {
     Route::post('/register', [AdminAuthController::class, 'register']);
     Route::post('/login', [AdminAuthController::class, 'login']);
@@ -17,14 +18,10 @@ Route::prefix('admin')->group(function () {
     Route::middleware('auth:admin')->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout']);
         Route::get('/me', [AdminAuthController::class, 'me']);
-
-//        // Protected admin routes with permission checks
-//        Route::middleware('permission:view admins')->get('/list', [AdminController::class, 'index']);
-//        Route::middleware('permission:create admins')->post('/create', [AdminController::class, 'store']);
     });
 });
 
-// Client Auth Routes (using web/api guard)
+// Client Auth Routes
 Route::prefix('client')->group(function () {
     Route::post('/register', [ClientAuthController::class, 'register']);
     Route::post('/login', [ClientAuthController::class, 'login']);
@@ -32,36 +29,41 @@ Route::prefix('client')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [ClientAuthController::class, 'logout']);
         Route::get('/me', [ClientAuthController::class, 'me']);
-
-//        // Protected client routes with permission checks
-//        Route::middleware('permission:save favorites')->post('/favorites', [ClientController::class, 'addFavorite']);
-//        Route::middleware('permission:schedule viewings')->post('/viewings', [ClientController::class, 'scheduleViewing']);
     });
 });
 
-Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
-    // Category stats
-    Route::get('/categories/stats', [CategoryController::class, 'getStats']);
+// Protected Admin Category Routes - Make sure these are NOT inside any other admin prefix
+Route::middleware(['auth:admin'])->group(function () {
+    // Category management routes
+    Route::prefix('admin')->group(function () {
+        // GET routes
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::get('/categories/stats', [CategoryController::class, 'getStats']);
+        Route::get('/categories/dropdown', [CategoryController::class, 'getDropdown']);
+        Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
-    // Category dropdown (for forms)
-    Route::get('/categories/dropdown', [CategoryController::class, 'getDropdown']);
+        // POST routes (for create)
+        Route::post('/categories', [CategoryController::class, 'store']);
 
-    // Bulk operations
-    Route::delete('/categories/bulk', [CategoryController::class, 'bulkDestroy']);
+        // PUT/PATCH routes (for update)
+        Route::put('/categories/{category}', [CategoryController::class, 'update']);
+        Route::patch('/categories/{category}', [CategoryController::class, 'update']);
 
-    // Single category operations
-    Route::post('/categories/{category}/toggle-featured', [CategoryController::class, 'toggleFeatured']);
-    Route::patch('/categories/{category}/status', [CategoryController::class, 'updateStatus']);
+        // DELETE routes
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+        Route::delete('/categories/bulk', [CategoryController::class, 'bulkDestroy']);
 
-    // Resource routes
-    Route::apiResource('categories', CategoryController::class);
+        // Custom routes
+        Route::post('/categories/{category}/toggle-featured', [CategoryController::class, 'toggleFeatured']);
+        Route::patch('/categories/{category}/status', [CategoryController::class, 'updateStatus']);
+    });
 });
 
 // Public routes (no auth required)
 Route::prefix('public')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
-    Route::get('/categories/{category:slug}', [CategoryController::class, 'show']);
     Route::get('/categories/featured', function () {
         return Category::featured()->active()->get();
     });
+    Route::get('/categories/{category:slug}', [CategoryController::class, 'show']);
 });

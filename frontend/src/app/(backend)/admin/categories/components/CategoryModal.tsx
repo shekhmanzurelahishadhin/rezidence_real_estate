@@ -1,16 +1,19 @@
 // app/(backend)/admin/categories/components/CategoryModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { XIcon, UploadIcon, FolderIcon, CheckIcon } from "@/assets/icons";
+import { useState, useEffect, useRef } from "react";
+import { XIcon, FolderIcon, CheckIcon } from "@/assets/icons";
+import { categoryService } from "@/app/(backend)/services/api/categories";
+import { Category, CategoryFormData } from "@/app/(backend)/types/category";
+import toast from "react-hot-toast";
 
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   type: 'create' | 'edit';
-  category?: any;
+  category?: Category | null;
   isDarkMode: boolean;
-  onSubmit: (data: any) => void;
+  onSuccess: () => void;
 }
 
 export default function CategoryModal({
@@ -19,17 +22,21 @@ export default function CategoryModal({
   type,
   category,
   isDarkMode,
-  onSubmit
+  onSuccess
 }: CategoryModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CategoryFormData>({
     name: "",
     description: "",
     icon: "🏠",
     status: "active",
     featured: false,
     color: "#3B82F6",
-    image: ""
+    image: null
   });
+  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Icon options
   const iconOptions = [
@@ -69,8 +76,9 @@ export default function CategoryModal({
         status: category.status || "active",
         featured: category.featured || false,
         color: category.color || "#3B82F6",
-        image: category.image || ""
+        image: category.image_url || null
       });
+      setImagePreview(category.image_url);
     } else {
       // Reset for create
       setFormData({
@@ -80,37 +88,134 @@ export default function CategoryModal({
         status: "active",
         featured: false,
         color: "#3B82F6",
-        image: ""
+        image: null
       });
+      setImagePreview(null);
+      setImageFile(null);
     }
   }, [category, type]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const submitData = {
-      ...formData,
-      slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      name: formData.name.trim(),
-      description: formData.description.trim()
-    };
+    try {
+      setLoading(true);
+      
+      // Prepare the data object
+      const dataToSend = {
+        name: formData.name?.trim() || '',
+        description: formData.description?.trim() || '',
+        icon: formData.icon || '🏠',
+        status: formData.status || 'active',
+        featured: formData.featured ? 1 : 0,
+        color: formData.color || '#3B82F6',
+      };
 
-    onSubmit(submitData);
+      console.log('Data to send:', dataToSend);
+      console.log('Has image file:', !!imageFile);
+
+      if (type === 'create') {
+        let response;
+        
+        if (imageFile) {
+          // If there's an image, use FormData
+          const formDataToSend = new FormData();
+          Object.entries(dataToSend).forEach(([key, value]) => {
+            formDataToSend.append(key, String(value));
+          });
+          formDataToSend.append('image', imageFile);
+          
+          console.log('Sending with FormData (with image)');
+          response = await categoryService.createCategoryWithImage(formDataToSend);
+        } else {
+          // If no image, send as JSON
+          console.log('Sending as JSON (no image)');
+          response = await categoryService.createCategory(dataToSend);
+        }
+        
+        console.log('Create response:', response);
+        
+        if (response.success) {
+          toast.success('Category created successfully');
+          onSuccess();
+          onClose();
+        } else {
+          toast.error(response.message || 'Failed to create category');
+          if (response.errors) {
+            console.error('Validation errors:', response.errors);
+            Object.keys(response.errors).forEach(field => {
+              toast.error(`${field}: ${response.errors[field].join(', ')}`);
+            });
+          }
+        }
+      } else if (category) {
+        let response;
+        
+        if (imageFile) {
+          // If there's a new image, use FormData
+          const formDataToSend = new FormData();
+          Object.entries(dataToSend).forEach(([key, value]) => {
+            formDataToSend.append(key, String(value));
+          });
+          formDataToSend.append('image', imageFile);
+          formDataToSend.append('_method', 'PUT');
+          
+          console.log('Sending with FormData (with image)');
+          response = await categoryService.updateCategoryWithImage(category.id, formDataToSend);
+        } else {
+          // If no new image, send as JSON
+          console.log('Sending as JSON (no image)');
+          response = await categoryService.updateCategory(category.id, dataToSend);
+        }
+        
+        console.log('Update response:', response);
+        
+        if (response.success) {
+          toast.success('Category updated successfully');
+          onSuccess();
+          onClose();
+        } else {
+          toast.error(response.message || 'Failed to update category');
+          if (response.errors) {
+            console.error('Validation errors:', response.errors);
+            Object.keys(response.errors).forEach(field => {
+              toast.error(`${field}: ${response.errors[field].join(', ')}`);
+            });
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      toast.error(error.response?.data?.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
-      // In a real app, you would upload to a server
-      // Here we'll just create a mock URL
-      const imageUrl = URL.createObjectURL(files[0]);
-      setFormData(prev => ({ ...prev, image: imageUrl }));
+      const file = files[0];
+      setImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      setFormData(prev => ({ ...prev, image: previewUrl }));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData(prev => ({ ...prev, image: null }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   return (
+    // ... rest of your JSX remains exactly the same
     <>
       {/* Overlay */}
       <div 
@@ -144,6 +249,7 @@ export default function CategoryModal({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className={`p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -155,6 +261,7 @@ export default function CategoryModal({
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6">
+              {/* ... rest of your form JSX remains exactly the same */}
               <div className="space-y-6">
                 {/* Name & Status */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,6 +282,7 @@ export default function CategoryModal({
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
                       }`}
                       placeholder="Modern Homes"
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -192,10 +300,12 @@ export default function CategoryModal({
                           ? "bg-gray-700 border-gray-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
                           : "bg-white border-gray-300 text-gray-900 focus:border-amber-500 focus:ring-amber-100"
                       }`}
+                      disabled={loading}
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                       <option value="pending">Pending</option>
+                      <option value="archived">Archived</option>
                     </select>
                   </div>
                 </div>
@@ -205,10 +315,9 @@ export default function CategoryModal({
                   <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
                     isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}>
-                    Description *
+                    Description
                   </label>
                   <textarea
-                    required
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -218,6 +327,7 @@ export default function CategoryModal({
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-amber-100"
                     }`}
                     placeholder="Describe this category for users..."
+                    disabled={loading}
                   />
                 </div>
 
@@ -243,6 +353,7 @@ export default function CategoryModal({
                                 : "bg-gray-100 hover:bg-gray-200"
                           }`}
                           title={option.label}
+                          disabled={loading}
                         >
                           {option.value}
                         </button>
@@ -268,6 +379,7 @@ export default function CategoryModal({
                           }`}
                           style={{ backgroundColor: option.value }}
                           title={option.label}
+                          disabled={loading}
                         >
                           {formData.color === option.value && (
                             <span className="text-white">✓</span>
@@ -279,7 +391,7 @@ export default function CategoryModal({
                 </div>
 
                 {/* Image Upload */}
-                <div>
+                {/* <div>
                   <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
                     isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}>
@@ -290,20 +402,22 @@ export default function CategoryModal({
                       ? "border-gray-600 hover:border-amber-500"
                       : "border-gray-300 hover:border-amber-400"
                   }`}>
-                    {formData.image ? (
+                    {imagePreview ? (
                       <div className="relative group">
                         <div className="aspect-video rounded-lg overflow-hidden">
-                          <div 
-                            className="w-full h-full bg-cover bg-center"
-                            style={{ backgroundImage: `url(${formData.image})` }}
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview"
+                            className="w-full h-full object-cover"
                           />
                         </div>
                         <button
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, image: "" }))}
-                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={handleRemoveImage}
+                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-600"
+                          disabled={loading}
                         >
-                          <XIcon size={14} />
+                          <XIcon size={16} />
                         </button>
                       </div>
                     ) : (
@@ -322,24 +436,26 @@ export default function CategoryModal({
                           <p className={`text-sm mt-1 transition-colors duration-500 ${
                             isDarkMode ? "text-gray-400" : "text-gray-500"
                           }`}>
-                            PNG, JPG up to 5MB
+                            PNG, JPG up to 2MB
                           </p>
                         </div>
                         <label className="cursor-pointer">
                           <input
+                            ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/jpg,image/gif"
                             onChange={handleImageUpload}
                             className="hidden"
+                            disabled={loading}
                           />
-                          <div className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300">
+                          <div className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                             Select Image
                           </div>
                         </label>
                       </div>
                     )}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Preview */}
                 <div>
@@ -384,6 +500,8 @@ export default function CategoryModal({
                               ? "bg-green-100 text-green-800"
                               : formData.status === 'pending'
                               ? "bg-yellow-100 text-yellow-800"
+                              : formData.status === 'archived'
+                              ? "bg-red-100 text-red-800"
                               : "bg-gray-100 text-gray-800"
                           }`}>
                             {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
@@ -412,6 +530,7 @@ export default function CategoryModal({
                             ? "border-gray-600 bg-gray-700 hover:bg-gray-600"
                             : "border-gray-300 bg-gray-50 hover:bg-gray-100"
                       }`}
+                      disabled={loading}
                     >
                       <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors duration-300 ${
                         formData.featured
@@ -455,13 +574,21 @@ export default function CategoryModal({
                       ? "border-gray-600 text-gray-300" 
                       : "border-gray-300 text-gray-700"
                   }`}
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
+                  {loading && (
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
                   {type === 'create' ? 'Create Category' : 'Update Category'}
                 </button>
               </div>

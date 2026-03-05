@@ -1,7 +1,7 @@
 // app/(backend)/admin/categories/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/app/ThemeProvider";
 import {
   PlusIcon,
@@ -12,61 +12,88 @@ import {
   MoreVerticalIcon,
   DownloadIcon,
   RefreshIcon,
-  FolderIcon,
   EyeIcon,
   StarIcon,
 } from "@/assets/icons";
 import CategoryModal from "./components/CategoryModal";
-import { mockCategories } from "./data";
+import { categoryService } from "@/app/(backend)/services/api/categories";
+import { Category, CategoryStats } from "@/app/(backend)/types/category";
+import toast from "react-hot-toast";
+import debounce from "lodash/debounce";
 
 export default function CategoriesPage() {
   const { isDarkMode } = useTheme();
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"create" | "edit">("create");
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
-  const [categories, setCategories] = useState(mockCategories);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<CategoryStats>({
+    total: 0,
+    active: 0,
+    featured: 0,
+    pending: 0,
+    total_properties: 0
+  });
+  
+  // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  // Filter and search categories
-  const filteredCategories = categories.filter((category) => {
-    const matchesSearch =
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFilter =
-      filter === "all" ||
-      category.status.toLowerCase() === filter.toLowerCase() ||
-      (filter === "featured" && category.featured);
-
-    return matchesSearch && matchesFilter;
-  });
-
-  // Sort categories
-  const sortedCategories = [...filteredCategories].sort((a, b) => {
-    switch (sortBy) {
-      case "name_asc":
-        return a.name.localeCompare(b.name);
-      case "name_desc":
-        return b.name.localeCompare(a.name);
-      case "count_high":
-        return b.propertyCount - a.propertyCount;
-      case "count_low":
-        return a.propertyCount - b.propertyCount;
-      case "newest":
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      case "oldest":
-        return (
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-      default:
-        return 0;
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await categoryService.getCategories({
+        search: searchTerm || undefined,
+        status: filter !== 'all' ? filter : undefined,
+        sort_by: sortBy,
+        page: currentPage,
+        per_page: perPage
+      });
+      
+      setCategories(response.data.data);
+      setTotalItems(response.data.meta.total);
+      setTotalPages(response.data.meta.last_page);
+    } catch (error) {
+      toast.error('Failed to fetch categories');
+    } finally {
+      setLoading(false);
     }
-  });
+  }, [searchTerm, filter, sortBy, currentPage, perPage]);
+
+  // Fetch stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await categoryService.getStats();
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  }, []);
+
+  // Debounced search
+  const debouncedSearch = debounce((value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  }, 500);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchCategories();
+    fetchStats();
+  }, [fetchCategories, fetchStats]);
+
+  // Handle search input
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSearch(e.target.value);
+  };
 
   // Handle create category
   const handleCreate = () => {
@@ -76,45 +103,83 @@ export default function CategoriesPage() {
   };
 
   // Handle edit category
-  const handleEdit = (category: any) => {
+  const handleEdit = (category: Category) => {
     setModalType("edit");
     setSelectedCategory(category);
     setShowModal(true);
   };
 
   // Handle delete category
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    
+    try {
+      await categoryService.deleteCategory(id);
+      toast.success('Category deleted successfully');
+      fetchCategories();
+      fetchStats();
+      setSelectedRows(prev => prev.filter(rowId => rowId !== id));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete category');
     }
   };
 
   // Handle bulk delete
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedRows.length === 0) return;
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedRows.length} categories?`,
-      )
-    ) {
-      setCategories((prev) => prev.filter((c) => !selectedRows.includes(c.id)));
+    
+    if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} categories?`)) return;
+    
+    try {
+      await categoryService.bulkDeleteCategories(selectedRows);
+      toast.success(`${selectedRows.length} categories deleted successfully`);
+      fetchCategories();
+      fetchStats();
       setSelectedRows([]);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete categories');
     }
   };
 
   // Handle status change
-  const handleStatusChange = (id: number, status: string) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status } : c)),
-    );
+  const handleStatusChange = async (id: number, status: string) => {
+    try {
+      await categoryService.updateStatus(id, status);
+      toast.success('Status updated successfully');
+      fetchCategories();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
   };
 
   // Handle featured toggle
-  const handleToggleFeatured = (id: number) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, featured: !c.featured } : c)),
-    );
+  const handleToggleFeatured = async (id: number) => {
+    try {
+      await categoryService.toggleFeatured(id);
+      toast.success('Featured status updated');
+      fetchCategories();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to update featured status');
+    }
+  };
+
+  // Handle modal success
+  const handleModalSuccess = () => {
+    fetchCategories();
+    fetchStats();
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle refresh
+  const handleRefresh = () => {
+    fetchCategories();
+    fetchStats();
   };
 
   // Get status color
@@ -125,10 +190,7 @@ export default function CategoriesPage() {
       pending: { bg: "bg-yellow-100", text: "text-yellow-800" },
       archived: { bg: "bg-red-100", text: "text-red-800" },
     };
-    const color = colors[status.toLowerCase()] || colors.inactive;
-    return isDarkMode
-      ? `${color.bg}/20 ${color.text}/80`
-      : `${color.bg} ${color.text}`;
+    return colors[status.toLowerCase()] || colors.inactive;
   };
 
   return (
@@ -189,27 +251,27 @@ export default function CategoriesPage() {
         {[
           {
             title: "Total Categories",
-            value: categories.length,
+            value: stats.total,
             color: "blue",
-            change: "+8%",
+            change: "+0%",
           },
           {
             title: "Active Categories",
-            value: categories.filter((c) => c.status === "active").length,
+            value: stats.active,
             color: "green",
-            change: "+12%",
+            change: "+0%",
           },
           {
             title: "Featured",
-            value: categories.filter((c) => c.featured).length,
+            value: stats.featured,
             color: "purple",
-            change: "+5%",
+            change: "+0%",
           },
           {
             title: "Total Properties",
-            value: categories.reduce((sum, cat) => sum + cat.propertyCount, 0),
+            value: stats.total_properties,
             color: "amber",
-            change: "+15%",
+            change: "+0%",
           },
         ].map((stat) => (
           <div
@@ -228,15 +290,6 @@ export default function CategoriesPage() {
               >
                 {stat.title}
               </h3>
-              <div
-                className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                  stat.change.startsWith("+")
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                }`}
-              >
-                {stat.change}
-              </div>
             </div>
             <div className="flex items-end justify-between">
               <div>
@@ -258,7 +311,7 @@ export default function CategoriesPage() {
                             ? "bg-purple-500"
                             : "bg-amber-500"
                     }`}
-                    style={{ width: "75%" }}
+                    style={{ width: `${(stat.value / stats.total) * 100}%` }}
                   />
                 </div>
               </div>
@@ -287,8 +340,7 @@ export default function CategoriesPage() {
             <input
               type="search"
               placeholder="Search categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className={`w-full pl-10 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all duration-500 ${
                 isDarkMode
                   ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -301,7 +353,10 @@ export default function CategoriesPage() {
           <div className="flex flex-wrap gap-3">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
                 isDarkMode
                   ? "bg-gray-700 border-gray-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
@@ -312,12 +367,16 @@ export default function CategoriesPage() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="pending">Pending</option>
+              <option value="archived">Archived</option>
               <option value="featured">Featured</option>
             </select>
 
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
                 isDarkMode
                   ? "bg-gray-700 border-gray-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
@@ -332,15 +391,34 @@ export default function CategoriesPage() {
               <option value="count_low">Properties: Low to High</option>
             </select>
 
+            <select
+              value={perPage}
+              onChange={(e) => {
+                setPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-200 outline-none transition-all duration-500 ${
+                isDarkMode
+                  ? "bg-gray-700 border-gray-600 text-white focus:border-amber-500 focus:ring-amber-500/20"
+                  : "bg-gray-50 border-gray-300 text-gray-900 focus:border-amber-500"
+              }`}
+            >
+              <option value="10">10 per page</option>
+              <option value="25">25 per page</option>
+              <option value="50">50 per page</option>
+              <option value="100">100 per page</option>
+            </select>
+
             <button
+              onClick={handleRefresh}
               className={`px-4 py-2.5 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 flex items-center gap-2 ${
                 isDarkMode
                   ? "border-gray-600 text-gray-300"
                   : "border-gray-300 text-gray-700"
               }`}
             >
-              <FilterIcon size={16} />
-              More Filters
+              <RefreshIcon size={16} />
+              Refresh
             </button>
           </div>
         </div>
@@ -366,10 +444,7 @@ export default function CategoriesPage() {
             <div className="flex items-center gap-4">
               <input
                 type="checkbox"
-                checked={
-                  selectedRows.length === categories.length &&
-                  categories.length > 0
-                }
+                checked={selectedRows.length === categories.length && categories.length > 0}
                 onChange={(e) => {
                   if (e.target.checked) {
                     setSelectedRows(categories.map((c) => c.id));
@@ -390,125 +465,37 @@ export default function CategoriesPage() {
               >
                 {selectedRows.length > 0
                   ? `${selectedRows.length} selected`
-                  : `${categories.length} categories`}
+                  : `${totalItems} categories`}
               </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className={`p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                <RefreshIcon size={18} />
-              </button>
-              <button
-                className={`p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                <DownloadIcon size={18} />
-              </button>
             </div>
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr
-                className={`border-b transition-colors duration-500 ${
-                  isDarkMode
-                    ? "border-gray-700 bg-gray-800"
-                    : "border-gray-100 bg-gray-50"
-                }`}
-              >
-                <th className="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedRows.length === categories.length &&
-                      categories.length > 0
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRows(categories.map((c) => c.id));
-                      } else {
-                        setSelectedRows([]);
-                      }
-                    }}
-                    className={`rounded border transition-colors duration-300 ${
-                      isDarkMode
-                        ? "border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500/20"
-                        : "border-gray-300 text-amber-600 focus:ring-amber-500"
-                    }`}
-                  />
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Category
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Status
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Properties
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Views
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Date
-                </th>
-                <th
-                  className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedCategories.map((category) => (
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
                 <tr
-                  key={category.id}
-                  className={`border-b transition-all duration-300 ${
+                  className={`border-b transition-colors duration-500 ${
                     isDarkMode
-                      ? "border-gray-700 hover:bg-gray-800" // Custom gray level for better contrast
-                      : "border-gray-100 hover:bg-gray-50"
+                      ? "border-gray-700 bg-gray-800"
+                      : "border-gray-100 bg-gray-50"
                   }`}
                 >
-                  <td className="px-6 py-4">
+                  <th className="px-6 py-4 text-left w-10">
                     <input
                       type="checkbox"
-                      checked={selectedRows.includes(category.id)}
+                      checked={selectedRows.length === categories.length && categories.length > 0}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedRows((prev) => [...prev, category.id]);
+                          setSelectedRows(categories.map((c) => c.id));
                         } else {
-                          setSelectedRows((prev) =>
-                            prev.filter((id) => id !== category.id),
-                          );
+                          setSelectedRows([]);
                         }
                       }}
                       className={`rounded border transition-colors duration-300 ${
@@ -517,209 +504,307 @@ export default function CategoriesPage() {
                           : "border-gray-300 text-amber-600 focus:ring-amber-500"
                       }`}
                     />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        <span className="text-2xl">{category.icon}</span>
-                      </div>
-                      <div>
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Category
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Status
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Properties
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Views
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Date
+                  </th>
+                  <th
+                    className={`px-6 py-4 text-left text-sm font-medium transition-colors duration-500 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((category) => {
+                  const statusColor = getStatusColor(category.status);
+                  return (
+                    <tr
+                      key={category.id}
+                      className={`border-b transition-all duration-300 ${
+                        isDarkMode
+                          ? "border-gray-700 hover:bg-gray-800"
+                          : "border-gray-100 hover:bg-gray-50"
+                      }`}
+                    >
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(category.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedRows((prev) => [...prev, category.id]);
+                            } else {
+                              setSelectedRows((prev) =>
+                                prev.filter((id) => id !== category.id),
+                              );
+                            }
+                          }}
+                          className={`rounded border transition-colors duration-300 ${
+                            isDarkMode
+                              ? "border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500/20"
+                              : "border-gray-300 text-amber-600 focus:ring-amber-500"
+                          }`}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                              isDarkMode ? "bg-gray-700" : "bg-gray-100"
+                            }`}
+                            style={{ backgroundColor: category.color || undefined }}
+                          >
+                            <span className="text-2xl">{category.icon || "🏠"}</span>
+                          </div>
+                          <div>
+                            <div
+                              className={`font-medium transition-colors duration-500 ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {category.name}
+                            </div>
+                            <div
+                              className={`text-sm transition-colors duration-500 ${
+                                isDarkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              {category.description || "No description"}
+                            </div>
+                          </div>
+                          {category.featured && (
+                            <span className="px-2 py-0.5 text-xs bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={category.status}
+                            onChange={(e) =>
+                              handleStatusChange(category.id, e.target.value)
+                            }
+                            className={`text-xs px-2 py-1 rounded border transition-colors duration-300 ${
+                              isDarkMode
+                                ? "bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:border-gray-500"
+                                : "bg-gray-50 border-gray-300 text-gray-900 hover:bg-gray-100 hover:border-gray-400"
+                            }`}
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="pending">Pending</option>
+                            <option value="archived">Archived</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div
-                          className={`font-medium transition-colors duration-500 ${
+                          className={`font-bold transition-colors duration-500 ${
                             isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          {category.name}
+                          {category.property_count}
+                          <span
+                            className={`text-sm font-normal ml-1 transition-colors duration-500 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            properties
+                          </span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1">
+                          <EyeIcon
+                            size={14}
+                            className={
+                              isDarkMode ? "text-gray-500" : "text-gray-400"
+                            }
+                          />
+                          <span
+                            className={`font-medium transition-colors duration-500 ${
+                              isDarkMode ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {category.views.toLocaleString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div
                           className={`text-sm transition-colors duration-500 ${
                             isDarkMode ? "text-gray-400" : "text-gray-500"
                           }`}
                         >
-                          {category.description}
+                          {new Date(category.created_at).toLocaleDateString()}
                         </div>
-                      </div>
-                      {category.featured && (
-                        <span className="px-2 py-0.5 text-xs bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={category.status}
-                        onChange={(e) =>
-                          handleStatusChange(category.id, e.target.value)
-                        }
-                        className={`text-xs px-2 py-1 rounded border transition-colors duration-300 ${
-                          isDarkMode
-                            ? "bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:border-gray-500"
-                            : "bg-gray-50 border-gray-300 text-gray-900 hover:bg-gray-100 hover:border-gray-400"
-                        }`}
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="pending">Pending</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div
-                      className={`font-bold transition-colors duration-500 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {category.propertyCount}
-                      <span
-                        className={`text-sm font-normal ml-1 transition-colors duration-500 ${
-                          isDarkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        properties
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <EyeIcon
-                        size={14}
-                        className={
-                          isDarkMode ? "text-gray-500" : "text-gray-400"
-                        }
-                      />
-                      <span
-                        className={`font-medium transition-colors duration-500 ${
-                          isDarkMode ? "text-gray-300" : "text-gray-700"
-                        }`}
-                      >
-                        {category.views.toLocaleString()}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div
-                      className={`text-sm transition-colors duration-500 ${
-                        isDarkMode ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      {new Date(category.createdAt).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                          isDarkMode ? "text-blue-400" : "text-blue-600"
-                        }`}
-                        title="Edit"
-                      >
-                        <EditIcon size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category.id)}
-                        className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                          isDarkMode ? "text-red-400" : "text-red-600"
-                        }`}
-                        title="Delete"
-                      >
-                        <TrashIcon size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleToggleFeatured(category.id)}
-                        className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                          category.featured
-                            ? "text-amber-500"
-                            : isDarkMode
-                              ? "text-gray-400"
-                              : "text-gray-600"
-                        }`}
-                        title={
-                          category.featured
-                            ? "Remove featured"
-                            : "Make featured"
-                        }
-                      >
-                        <StarIcon
-                          size={16}
-                          className={category.featured ? "fill-current" : ""}
-                        />
-                      </button>
-                      <button
-                        className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        <MoreVerticalIcon size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(category)}
+                            className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
+                              isDarkMode ? "text-blue-400" : "text-blue-600"
+                            }`}
+                            title="Edit"
+                          >
+                            <EditIcon size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(category.id)}
+                            className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
+                              isDarkMode ? "text-red-400" : "text-red-600"
+                            }`}
+                            title="Delete"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleFeatured(category.id)}
+                            className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
+                              category.featured
+                                ? "text-amber-500"
+                                : isDarkMode
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                            }`}
+                            title={
+                              category.featured
+                                ? "Remove featured"
+                                : "Make featured"
+                            }
+                          >
+                            <StarIcon
+                              size={16}
+                              className={category.featured ? "fill-current" : ""}
+                            />
+                          </button>
+                          <button
+                            className={`p-1.5 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            <MoreVerticalIcon size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Table Footer */}
-        <div
-          className={`px-6 py-4 border-t transition-colors duration-500 ${
-            isDarkMode
-              ? "border-gray-700 bg-gray-800"
-              : "border-gray-100 bg-gray-50"
-          }`}
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div
-              className={`text-sm transition-colors duration-500 ${
-                isDarkMode ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              Showing {sortedCategories.length} of {categories.length}{" "}
-              categories
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className={`px-3 py-1.5 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 ${
-                  isDarkMode
-                    ? "border-gray-600 text-gray-300"
-                    : "border-gray-300 text-gray-700"
+        {!loading && (
+          <div
+            className={`px-6 py-4 border-t transition-colors duration-500 ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-800"
+                : "border-gray-100 bg-gray-50"
+            }`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div
+                className={`text-sm transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                Previous
-              </button>
-              {[1, 2, 3, 4, 5].map((page) => (
+                Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalItems)} of {totalItems} categories
+              </div>
+              <div className="flex items-center gap-2">
                 <button
-                  key={page}
-                  className={`w-8 h-8 rounded transition-colors duration-300 ${
-                    page === 1
-                      ? "bg-amber-500 text-white"
-                      : isDarkMode
-                        ? "text-gray-400 hover:bg-gray-700"
-                        : "text-gray-700 hover:bg-gray-100"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1.5 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? "border-gray-600 text-gray-300"
+                      : "border-gray-300 text-gray-700"
                   }`}
                 >
-                  {page}
+                  Previous
                 </button>
-              ))}
-              <button
-                className={`px-3 py-1.5 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 ${
-                  isDarkMode
-                    ? "border-gray-600 text-gray-300"
-                    : "border-gray-300 text-gray-700"
-                }`}
-              >
-                Next
-              </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 2 && page <= currentPage + 2)
+                  )
+                  .map((page, index, array) => {
+                    if (index > 0 && array[index - 1] !== page - 1) {
+                      return (
+                        <span key={`ellipsis-${page}`} className="px-2">...</span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`w-8 h-8 rounded transition-colors duration-300 ${
+                          page === currentPage
+                            ? "bg-amber-500 text-white"
+                            : isDarkMode
+                              ? "text-gray-400 hover:bg-gray-700"
+                              : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1.5 rounded border hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? "border-gray-600 text-gray-300"
+                      : "border-gray-300 text-gray-700"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Category Modal */}
@@ -729,29 +814,7 @@ export default function CategoriesPage() {
         type={modalType}
         category={selectedCategory}
         isDarkMode={isDarkMode}
-        onSubmit={(data) => {
-          if (modalType === "create") {
-            // Add new category
-            setCategories((prev) => [
-              {
-                ...data,
-                id: Math.max(...prev.map((c) => c.id)) + 1,
-                createdAt: new Date().toISOString(),
-                views: 0,
-                propertyCount: 0,
-              },
-              ...prev,
-            ]);
-          } else {
-            // Update existing category
-            setCategories((prev) =>
-              prev.map((c) =>
-                c.id === selectedCategory.id ? { ...c, ...data } : c,
-              ),
-            );
-          }
-          setShowModal(false);
-        }}
+        onSuccess={handleModalSuccess}
       />
     </div>
   );
