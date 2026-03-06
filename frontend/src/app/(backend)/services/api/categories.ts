@@ -25,54 +25,21 @@ export const categoryService = {
     }, 'admin');
   },
 
-  // Get single category
-  async getCategory(id: number): Promise<ApiResponse<{ data: Category }>> {
-    return apiRequest(`/admin/categories/${id}`, {
-      method: 'GET',
-    }, 'admin');
-  },
-
-  // Create category WITHOUT image (JSON)
-  async createCategory(data: Record<string, any>): Promise<ApiResponse<{ data: Category }>> {
-    console.log('Creating category with JSON:', data);
-    return apiRequest('/admin/categories', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }, 'admin');
-  },
-
-  // Create category WITH image (FormData)
-  async createCategoryWithImage(data: FormData): Promise<ApiResponse<{ data: Category }>> {
-    console.log('Creating category with FormData');
+  async createCategory(data: FormData): Promise<ApiResponse<{ data: Category }>> {
+    // IMPORTANT: Don't set any headers - let apiRequest handle it
     return apiRequest('/admin/categories', {
       method: 'POST',
       body: data,
-      headers: {} // Let browser set Content-Type
     }, 'admin');
   },
 
-  // Update category WITHOUT image (JSON)
-  async updateCategory(id: number, data: Record<string, any>): Promise<ApiResponse<{ data: Category }>> {
-    console.log('Updating category with JSON:', data);
+  async updateCategory(id: number, data: FormData): Promise<ApiResponse<{ data: Category }>> {
+    // For Laravel update with file
+    data.append('_method', 'PUT');
+    
     return apiRequest(`/admin/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }, 'admin');
-  },
-
-  // Update category WITH image (FormData)
-  async updateCategoryWithImage(id: number, data: FormData): Promise<ApiResponse<{ data: Category }>> {
-    console.log('Updating category with FormData');
-    return apiRequest(`/admin/categories/${id}`, {
-      method: 'POST', // Using POST with _method=PUT in FormData
+      method: 'POST', // Using POST with _method=PUT
       body: data,
-      headers: {} // Let browser set Content-Type
     }, 'admin');
   },
 

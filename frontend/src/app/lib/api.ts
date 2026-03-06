@@ -15,12 +15,29 @@ export async function apiRequest<T = any>(
 ): Promise<ApiResponse<T>> {
   const token = localStorage.getItem(`${userType}_token`);
   
+  // Check if we're sending FormData
+  const isFormData = options.body instanceof FormData;
+  
+  // Create headers - don't set Content-Type for FormData
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
+
+  // Only add Content-Type if it's NOT FormData
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // Log the request for debugging
+  console.log(`🌐 API Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+  console.log('Headers:', headers);
+  if (isFormData) {
+    console.log('Body: FormData with fields:', [...(options.body as FormData).keys()]);
+  } else if (options.body) {
+    console.log('Body:', options.body);
+  }
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -30,6 +47,7 @@ export async function apiRequest<T = any>(
     });
 
     const data = await response.json();
+    console.log('📦 API Response:', { status: response.status, data });
 
     if (!response.ok) {
       return {
@@ -44,6 +62,7 @@ export async function apiRequest<T = any>(
       ...data,
     };
   } catch (error) {
+    console.error('❌ API Error:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Network error',
