@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\Home\HomeCategoryController;
 
 // Admin Auth Routes
 Route::prefix('admin')->group(function () {
@@ -60,10 +61,9 @@ Route::middleware(['auth:admin'])->group(function () {
 });
 
 // Public routes (no auth required)
+// Public routes (no auth required)
 Route::prefix('public')->group(function () {
-    Route::get('/categories', [CategoryController::class, 'index']);
-    Route::get('/categories/featured', function () {
-        return Category::featured()->active()->get();
-    });
-    Route::get('/categories/{category:slug}', [CategoryController::class, 'show']);
+    Route::get('/categories', [HomeCategoryController::class, 'index']);
+    Route::get('/categories/featured', [HomeCategoryController::class, 'featured']);
+    Route::get('/categories/{category:slug}', [HomeCategoryController::class, 'show']);
 });

@@ -13,24 +13,29 @@ export async function apiRequest<T = any>(
   options: RequestInit = {},
   userType: 'admin' | 'client' = 'client'
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem(`${userType}_token`);
+  // Only try to get token if it's not a public route
+  const isPublicRoute = endpoint.startsWith('/public/');
+  const token = !isPublicRoute ? localStorage.getItem(`${userType}_token`) : null;
   
   // Check if we're sending FormData
   const isFormData = options.body instanceof FormData;
   
-  // Create headers - don't set Content-Type for FormData
+  // Create headers
   const headers: HeadersInit = {
     'Accept': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
+
+  // Only add Authorization if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   // Only add Content-Type if it's NOT FormData
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // Log the request for debugging
   console.log(`🌐 API Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
   console.log('Headers:', headers);
   if (isFormData) {
@@ -50,6 +55,11 @@ export async function apiRequest<T = any>(
     console.log('📦 API Response:', { status: response.status, data });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized specially
+      if (response.status === 401) {
+        console.error('Authentication failed for endpoint:', endpoint);
+      }
+      
       return {
         success: false,
         message: data.message || 'An error occurred',
