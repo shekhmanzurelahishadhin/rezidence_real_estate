@@ -10,6 +10,8 @@ use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Home\HomeCategoryController;
+use App\Http\Controllers\Home\HomePropertyController;
+use App\Http\Controllers\Admin\PropertyController;
 
 // Admin Auth Routes
 Route::prefix('admin')->group(function () {
@@ -57,6 +59,14 @@ Route::middleware(['auth:admin'])->group(function () {
         // Custom routes
         Route::post('/categories/{category}/toggle-featured', [CategoryController::class, 'toggleFeatured']);
         Route::patch('/categories/{category}/status', [CategoryController::class, 'updateStatus']);
+
+        // Property routes
+        Route::get('/properties/stats', [PropertyController::class, 'getStats']);
+        Route::delete('/properties/bulk', [PropertyController::class, 'bulkDestroy']);
+        Route::post('/properties/{property}/toggle-featured', [PropertyController::class, 'toggleFeatured']);
+        Route::patch('/properties/{property}/status', [PropertyController::class, 'updateStatus']);
+        Route::post('/properties/{property}/remove-image', [PropertyController::class, 'removeImage']);
+        Route::apiResource('properties', PropertyController::class);
     });
 });
 
@@ -66,4 +76,12 @@ Route::prefix('public')->group(function () {
     Route::get('/categories', [HomeCategoryController::class, 'index']);
     Route::get('/categories/featured', [HomeCategoryController::class, 'featured']);
     Route::get('/categories/{category:slug}', [HomeCategoryController::class, 'show']);
+
+    Route::get('/properties', [HomePropertyController::class, 'index']);
+    Route::get('/properties/featured', [HomePropertyController::class, 'featured']);
+    Route::get('/properties/homepage', [HomePropertyController::class, 'homepage']);
+    Route::get('/properties/cities', [HomePropertyController::class, 'cities']);
+    Route::get('/properties/price-range', [HomePropertyController::class, 'priceRange']);
+    Route::get('/properties/{slug}', [HomePropertyController::class, 'show']);
+    Route::get('/properties/{property}/similar', [HomePropertyController::class, 'similar']);
 });
