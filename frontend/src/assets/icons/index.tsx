@@ -794,3 +794,15 @@ export const UserPlusIcon: React.FC<IconProps> = ({ size = 24, className = "" })
     <line x1="16" y1="11" x2="22" y2="11" />
   </svg>
 );
+
+export const RulerIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 8v8" />
+    <path d="M8 8v4" />
+    <path d="M12 8v6" />
+    <path d="M16 8v8" />
+    <path d="M20 8v2" />
+    <path d="M4 8h16" />
+    <path d="M2 16h20" />
+  </svg>
+);

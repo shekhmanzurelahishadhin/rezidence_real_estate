@@ -1,8 +1,8 @@
+// app/(frontend)/components/PropertyCard.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Property } from "@/data";
 import { 
   BedIcon, 
   BathIcon, 
@@ -14,8 +14,39 @@ import {
   AreaIcon 
 } from "@/assets/icons";
 
+// Define the property type based on your API data
+interface ApiProperty {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  category_id: number;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  price: number | string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  size: number | null;
+  parking: string | null;
+  features: string[] | null;
+  images: string[] | null;
+  featured_image: string | null;
+  status: string;
+  featured: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface PropertyCardProps {
-  property: Property;
+  property: ApiProperty;
   viewMode?: 'grid' | 'list';
   isDarkMode?: boolean;
 }
@@ -23,22 +54,38 @@ interface PropertyCardProps {
 export default function PropertyCard({ property, viewMode = 'grid', isDarkMode = false }: PropertyCardProps) {
   const [liked, setLiked] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // Get property images based on ID
-  const getPropertyImage = (id: number) => {
-    const images = [
-      "https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Modern Villa
-      "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Luxury Penthouse
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80", // Contemporary Estate
-      "https://images.unsplash.com/photo-1518780664697-55e3ad937233?ixlib=rb-4.0.3&auto=format&fit=crop&w=1965&q=80", // Urban Loft
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Luxury Villa
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80", // Executive Suite
-    ];
-    return images[id % images.length] || images[0];
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+  // Get property image
+  const getPropertyImage = () => {
+    if (imageError) {
+      return `https://placehold.co/600x400/3b82f6/white?text=${encodeURIComponent(property.title || 'Property')}`;
+    }
+    
+    if (property.featured_image) {
+      return `${baseUrl}/storage/${property.featured_image}`;
+    }
+    
+    if (property.images && property.images.length > 0) {
+      return `${baseUrl}/storage/${property.images[0]}`;
+    }
+    
+    // Fallback images based on category
+    const fallbackImages: Record<string, string> = {
+      'Apartments': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      'Modern Homes': 'https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      'Villas': 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80',
+    };
+    
+    const categoryName = property.category?.name || '';
+    return fallbackImages[categoryName] || 'https://placehold.co/600x400/3b82f6/white?text=Property';
   };
 
   // Get property icon based on category
-  const getPropertyIcon = (category: string) => {
+  const getPropertyIcon = () => {
+    const categoryName = property.category?.name || '';
     const icons: Record<string, string> = {
       'Modern Homes': '🏠',
       'Luxury Estates': '🏰',
@@ -48,28 +95,41 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
       'Beachfront': '🏖️',
       'Urban Living': '🏙️',
       'Investment': '💰',
-      'Luxury Villa': '🏡',
-      'Residential Home': '🏠',
-      'Apartment': '🏢',
     };
-    return icons[category] || '🏠';
+    return icons[categoryName] || '🏠';
   };
 
   // Get status color
-  const getStatusColor = (status: string, darkMode = false) => {
+  const getStatusColor = (status: string) => {
     const colors: Record<string, { light: string; dark: string }> = {
-      'For Sale': { light: 'from-emerald-500 to-green-600', dark: 'from-emerald-400 to-green-500' },
-      'For Rent': { light: 'from-blue-500 to-cyan-600', dark: 'from-blue-400 to-cyan-500' },
-      'Sold': { light: 'from-gray-500 to-gray-700', dark: 'from-gray-400 to-gray-600' },
-      'Featured': { light: 'from-amber-500 to-orange-600', dark: 'from-amber-400 to-orange-500' },
-      'Hot': { light: 'from-pink-500 to-rose-600', dark: 'from-pink-400 to-rose-500' },
-      'New': { light: 'from-purple-500 to-indigo-600', dark: 'from-purple-400 to-indigo-500' },
+      'published': { light: 'from-emerald-500 to-green-600', dark: 'from-emerald-400 to-green-500' },
+      'pending': { light: 'from-yellow-500 to-amber-600', dark: 'from-yellow-400 to-amber-500' },
+      'draft': { light: 'from-gray-500 to-gray-700', dark: 'from-gray-400 to-gray-600' },
+      'archived': { light: 'from-gray-600 to-gray-800', dark: 'from-gray-500 to-gray-700' },
     };
-    const color = colors[status] || colors['Sold'];
-    return darkMode ? color.dark : color.light;
+    return colors[status] || colors['published'];
   };
 
-  const propertyImage = getPropertyImage(property.id);
+  // Get status display text
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'published': return 'For Sale';
+      case 'pending': return 'Pending';
+      case 'draft': return 'Draft';
+      case 'archived': return 'Archived';
+      default: return status;
+    }
+  };
+
+  const propertyImage = getPropertyImage();
+  const statusColors = getStatusColor(property.status);
+  const statusText = getStatusText(property.status);
+
+  // Format price
+  const formatPrice = (price: number | string) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numPrice.toLocaleString();
+  };
 
   if (viewMode === 'list') {
     return (
@@ -86,6 +146,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
               style={{
                 backgroundImage: `url(${propertyImage})`,
               }}
+              onError={() => setImageError(true)}
             >
               <div className={`absolute inset-0 transition-all duration-500 ${
                 isDarkMode 
@@ -96,8 +157,8 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
             
             {/* Top Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
-              <div className={`bg-gradient-to-r ${getStatusColor(property.status, isDarkMode)} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
-                {property.status}
+              <div className={`bg-gradient-to-r ${statusColors.light} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
+                {statusText}
               </div>
               {property.featured && (
                 <div className={`bg-gradient-to-r ${isDarkMode ? 'from-pink-400 to-purple-400' : 'from-pink-500 to-purple-500'} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
@@ -109,11 +170,11 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
             {/* Price Badge */}
             <div className="absolute bottom-4 left-4">
               <div className="text-2xl font-bold text-white drop-shadow-lg">
-                ${property.price.toLocaleString()}
+                ${formatPrice(property.price)}
               </div>
               <div className="text-white/90 text-sm flex items-center gap-1">
-                {getPropertyIcon(property.category)}
-                <span>For {property.for}</span>
+                {getPropertyIcon()}
+                <span>{property.category?.name || 'Property'}</span>
               </div>
             </div>
           </div>
@@ -129,7 +190,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
                       ? "bg-amber-400/10 text-amber-300" 
                       : "bg-amber-50 text-amber-700"
                   }`}>
-                    {property.category}
+                    {property.category?.name || 'Property'}
                   </span>
                   <h3 className={`text-xl font-bold mt-3 group-hover:text-amber-500 transition-colors duration-300 ${
                     isDarkMode ? "text-white" : "text-gray-900"
@@ -141,7 +202,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
                     <span className={`text-sm transition-colors duration-500 ${
                       isDarkMode ? "text-gray-300" : "text-gray-600"
                     }`}>
-                      {property.address}
+                      {property.address}, {property.city}, {property.state}
                     </span>
                   </div>
                 </div>
@@ -189,10 +250,10 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
               {/* Property Features */}
               <div className="grid grid-cols-4 gap-3 mb-6">
                 {[
-                  { icon: <BedIcon size={18} />, label: "Beds", value: property.bedrooms },
-                  { icon: <BathIcon size={18} />, label: "Baths", value: property.bathrooms },
+                  { icon: <BedIcon size={18} />, label: "Beds", value: property.bedrooms || 0 },
+                  { icon: <BathIcon size={18} />, label: "Baths", value: property.bathrooms || 0 },
                   { icon: <ParkingIcon size={18} />, label: "Parking", value: property.parking || '2' },
-                  { icon: <AreaIcon size={18} />, label: "Sq Ft", value: property.size || '2,500' },
+                  { icon: <AreaIcon size={18} />, label: "Sq Ft", value: property.size ? property.size.toLocaleString() : 'N/A' },
                 ].map((feature, index) => (
                   <div 
                     key={index}
@@ -227,7 +288,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
                       <StarIcon 
                         key={i} 
                         size={14} 
-                        className={`${i < Math.floor(property.rating || 4.5) 
+                        className={`${i < 4 
                           ? isDarkMode ? 'fill-amber-400 text-amber-400' : 'fill-amber-400 text-amber-400'
                           : isDarkMode ? 'fill-gray-700 text-gray-700' : 'fill-gray-300 text-gray-300'
                         }`}
@@ -237,18 +298,18 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
                   <span className={`text-sm transition-colors duration-500 ${
                     isDarkMode ? "text-gray-400" : "text-gray-600"
                   }`}>
-                    ({property.reviews || '42'} reviews)
+                    (42 reviews)
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-sm">
                     <EyeIcon size={14} className={isDarkMode ? "text-gray-400" : "text-gray-500"} />
                     <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-                      {property.views || Math.floor(Math.random() * 500) + 100}
+                      {property.views || 0}
                     </span>
                   </div>
                   <Link
-                    href={`/properties/${property.id}`}
+                    href={`/properties/${property.slug}`}
                     className={`font-semibold text-sm flex items-center gap-1 group/cta transition-colors duration-300 ${
                       isDarkMode 
                         ? "text-amber-400 hover:text-amber-300" 
@@ -299,6 +360,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
           style={{
             backgroundImage: `url(${propertyImage})`,
           }}
+          onError={() => setImageError(true)}
         >
           <div className={`absolute inset-0 transition-all duration-500 ${
             isDarkMode 
@@ -309,8 +371,8 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
         
         {/* Top Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
-          <div className={`bg-gradient-to-r ${getStatusColor(property.status, isDarkMode)} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
-            {property.status}
+          <div className={`bg-gradient-to-r ${statusColors.light} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
+            {statusText}
           </div>
           {property.featured && (
             <div className={`bg-gradient-to-r ${isDarkMode ? 'from-pink-400 to-purple-400' : 'from-pink-500 to-purple-500'} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>
@@ -354,18 +416,18 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
         {/* Price Badge */}
         <div className="absolute bottom-4 left-4">
           <div className="text-2xl font-bold text-white drop-shadow-lg">
-            ${property.price.toLocaleString()}
+            ${formatPrice(property.price)}
           </div>
           <div className="text-white/90 text-sm flex items-center gap-1">
-            {getPropertyIcon(property.category)}
-            <span>For {property.for}</span>
+            {getPropertyIcon()}
+            <span>{property.category?.name || 'Property'}</span>
           </div>
         </div>
 
         {/* View Count */}
         <div className="absolute bottom-4 right-4 flex items-center gap-1 text-white/80 text-sm">
           <EyeIcon size={14} />
-          <span>{property.views || Math.floor(Math.random() * 500) + 100}</span>
+          <span>{property.views || 0}</span>
         </div>
       </div>
 
@@ -378,7 +440,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
               ? "bg-amber-400/10 text-amber-300" 
               : "bg-amber-50 text-amber-700"
           }`}>
-            {property.category}
+            {property.category?.name || 'Property'}
           </span>
           <div className={`flex items-center gap-1 text-sm transition-colors duration-500 ${
             isDarkMode ? "text-gray-400" : "text-gray-500"
@@ -387,7 +449,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            <span>{property.date}</span>
+            <span>{new Date(property.created_at).toLocaleDateString()}</span>
           </div>
         </div>
 
@@ -404,7 +466,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
           <span className={`text-sm truncate transition-colors duration-500 ${
             isDarkMode ? "text-gray-300" : "text-gray-600"
           }`}>
-            {property.address}
+            {property.address}, {property.city}
           </span>
         </div>
 
@@ -418,10 +480,10 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
         {/* Property Features */}
         <div className="grid grid-cols-4 gap-3 mb-6">
           {[
-            { icon: <BedIcon size={18} />, label: "Beds", value: property.bedrooms },
-            { icon: <BathIcon size={18} />, label: "Baths", value: property.bathrooms },
+            { icon: <BedIcon size={18} />, label: "Beds", value: property.bedrooms || 0 },
+            { icon: <BathIcon size={18} />, label: "Baths", value: property.bathrooms || 0 },
             { icon: <ParkingIcon size={18} />, label: "Parking", value: property.parking || '2' },
-            { icon: <AreaIcon size={18} />, label: "Sq Ft", value: property.size || '2,500' },
+            { icon: <AreaIcon size={18} />, label: "Sq Ft", value: property.size ? property.size.toLocaleString() : 'N/A' },
           ].map((feature, index) => (
             <div 
               key={index}
@@ -456,7 +518,7 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
                 <StarIcon 
                   key={i} 
                   size={14} 
-                  className={`${i < Math.floor(property.rating || 4.5) 
+                  className={`${i < 4 
                     ? isDarkMode ? 'fill-amber-400 text-amber-400' : 'fill-amber-400 text-amber-400'
                     : isDarkMode ? 'fill-gray-700 text-gray-700' : 'fill-gray-300 text-gray-300'
                   }`}
@@ -466,11 +528,11 @@ export default function PropertyCard({ property, viewMode = 'grid', isDarkMode =
             <span className={`text-sm transition-colors duration-500 ${
               isDarkMode ? "text-gray-400" : "text-gray-600"
             }`}>
-              ({property.reviews || '42'} reviews)
+              (42 reviews)
             </span>
           </div>
           <Link
-            href={`/properties/${property.id}`}
+            href={`/properties/${property.slug}`}
             className={`font-semibold text-sm flex items-center gap-1 group/cta transition-colors duration-300 ${
               isDarkMode 
                 ? "text-amber-400 hover:text-amber-300" 
