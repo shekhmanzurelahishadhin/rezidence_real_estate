@@ -1,14 +1,13 @@
+// app/(frontend)/properties/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { properties, categories } from "@/data";
 import PropertyCard from "@/app/(frontend)/components/PropertyCard";
 import {
   FilterIcon,
   GridIcon,
   ListIcon,
-  ChevronDownIcon,
   SearchIcon,
   MapPinIcon,
   BedIcon,
@@ -16,55 +15,179 @@ import {
   ParkingIcon,
   TrendingUpIcon,
   StarIcon,
+  XIcon,
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
+import { frontendPropertyService } from "@/app/(frontend)/services/propertyService";
+import { frontendCategoryService } from "@/app/(frontend)/services/categoryService";
+import { Property } from "@/app/(frontend)/types/property";
+import { Category } from "@/app/(frontend)/types/category";
+import toast from "react-hot-toast";
 
 export default function PropertiesPage() {
   const { isDarkMode } = useTheme();
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Filters
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortBy, setSortBy] = useState("latest");
-  const [priceRange, setPriceRange] = useState([0, 10000000]);
+  const [sortBy, setSortBy] = useState("newest");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(10000000);
   const [bedrooms, setBedrooms] = useState(0);
+  const [bathrooms, setBathrooms] = useState(0);
+  const [city, setCity] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [perPage] = useState(9);
 
-  const filterOptions = ["All", ...categories.map((c) => c.label)];
+  // Price range from API
+  const [globalMinPrice, setGlobalMinPrice] = useState(0);
+  const [globalMaxPrice, setGlobalMaxPrice] = useState(10000000);
 
-  // Filter and sort properties
-  const filteredProperties = properties
-    .filter((property) => {
-      if (activeFilter !== "All" && property.category !== activeFilter) {
-        return false;
-      }
-      if (searchQuery && !property.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
-      }
-      if (property.price < priceRange[0] || property.price > priceRange[1]) {
-        return false;
-      }
-      if (bedrooms > 0 && property.bedrooms < bedrooms) {
-        return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price-low":
-          return a.price - b.price;
-        case "price-high":
-          return b.price - a.price;
-        case "popular":
-          return b.rating - a.rating;
-        default:
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-    });
-
-  // Auto-scroll to top when filter changes
   useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [activeCategory, sortBy, minPrice, maxPrice, bedrooms, bathrooms, city, searchQuery, currentPage]);
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch categories
+      const categoriesData = await frontendCategoryService.getActiveCategories({ per_page: 50 });
+      setCategories(categoriesData.data || []);
+      
+      // Fetch cities for filter
+      const citiesData = await frontendPropertyService.getCities();
+      setCities(citiesData);
+      
+      // Fetch price range
+      const priceRangeData = await frontendPropertyService.getPriceRange();
+      setGlobalMinPrice(priceRangeData.min);
+      setGlobalMaxPrice(priceRangeData.max);
+      setMinPrice(priceRangeData.min);
+      setMaxPrice(priceRangeData.max);
+      setPriceRange([priceRangeData.min, priceRangeData.max]);
+      
+    } catch (err) {
+      console.error('Error fetching initial data:', err);
+      toast.error('Failed to load filters');
+    }
+  };
+
+  const fetchProperties = async () => {
+    try {
+      setLoading(true);
+      
+      const params: any = {
+        page: currentPage,
+        per_page: perPage,
+        sort_by: sortBy,
+      };
+      
+      if (activeCategory !== 'all') {
+        params.category = activeCategory;
+      }
+      
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      
+      if (minPrice > globalMinPrice) {
+        params.min_price = minPrice;
+      }
+      
+      if (maxPrice < globalMaxPrice) {
+        params.max_price = maxPrice;
+      }
+      
+      if (bedrooms > 0) {
+        params.bedrooms = bedrooms;
+      }
+      
+      if (bathrooms > 0) {
+        params.bathrooms = bathrooms;
+      }
+      
+      if (city) {
+        params.city = city;
+      }
+      
+      const response = await frontendPropertyService.getProperties(params);
+      
+      setProperties(response.data);
+      setTotalItems(response.meta.total);
+      setTotalPages(response.meta.last_page);
+      
+    } catch (err) {
+      console.error('Error fetching properties:', err);
+      setError('Failed to load properties');
+      toast.error('Failed to load properties');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePriceRangeChange = (min: number, max: number) => {
+    setMinPrice(min);
+    setMaxPrice(max);
+    setPriceRange([min, max]);
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setActiveCategory('all');
+    setSearchQuery('');
+    setMinPrice(globalMinPrice);
+    setMaxPrice(globalMaxPrice);
+    setPriceRange([globalMinPrice, globalMaxPrice]);
+    setBedrooms(0);
+    setBathrooms(0);
+    setCity('');
+    setSortBy('newest');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeFilter]);
+  };
+
+  if (loading && properties.length === 0) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+          : "bg-gradient-to-b from-white to-gray-50"
+      }`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-500 border-t-transparent mx-auto mb-4"></div>
+          <p className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+            Loading properties...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const filterOptions = [
+    { id: 'all', name: 'All Properties', count: totalItems },
+    ...categories.map(cat => ({ id: cat.slug, name: cat.name, count: cat.property_count }))
+  ];
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${
@@ -150,7 +273,10 @@ export default function PropertiesPage() {
                       <input
                         type="text"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setCurrentPage(1);
+                        }}
                         placeholder="Search by location, property type, or keyword..."
                         className={`w-full bg-transparent border-none placeholder-gray-400 pl-12 pr-4 py-4 focus:outline-none text-lg transition-all duration-500 ${
                           isDarkMode ? "text-white" : "text-white"
@@ -188,26 +314,44 @@ export default function PropertiesPage() {
                 }`}>
                   Price Range
                 </label>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
                     <input
                       type="range"
-                      min="0"
-                      max="10000000"
+                      min={globalMinPrice}
+                      max={globalMaxPrice}
                       step="100000"
-                      value={priceRange[0]}
-                      onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
+                      value={minPrice}
+                      onChange={(e) => handlePriceRangeChange(parseInt(e.target.value), maxPrice)}
                       className={`w-full h-2 rounded-lg appearance-none cursor-pointer transition-all duration-500 ${
                         isDarkMode 
-                          ? "bg-gray-700 [&::-webkit-slider-thumb]:bg-amber-400 [&::-moz-range-thumb]:bg-amber-400" 
-                          : "bg-gray-200 [&::-webkit-slider-thumb]:bg-amber-500 [&::-moz-range-thumb]:bg-amber-500"
+                          ? "bg-gray-700 [&::-webkit-slider-thumb]:bg-amber-400" 
+                          : "bg-gray-200 [&::-webkit-slider-thumb]:bg-amber-500"
                       }`}
                     />
                   </div>
-                  <div className={`text-sm font-medium transition-colors duration-500 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-700"
-                  }`}>
-                    ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+                  <div className="flex items-center justify-between">
+                    <input
+                      type="number"
+                      value={minPrice}
+                      onChange={(e) => handlePriceRangeChange(parseInt(e.target.value) || 0, maxPrice)}
+                      className={`w-28 px-3 py-1.5 rounded-lg border text-sm ${
+                        isDarkMode 
+                          ? "bg-gray-700 border-gray-600 text-white" 
+                          : "bg-gray-50 border-gray-300 text-gray-900"
+                      }`}
+                    />
+                    <span className="text-gray-500">to</span>
+                    <input
+                      type="number"
+                      value={maxPrice}
+                      onChange={(e) => handlePriceRangeChange(minPrice, parseInt(e.target.value) || 0)}
+                      className={`w-28 px-3 py-1.5 rounded-lg border text-sm ${
+                        isDarkMode 
+                          ? "bg-gray-700 border-gray-600 text-white" 
+                          : "bg-gray-50 border-gray-300 text-gray-900"
+                      }`}
+                    />
                   </div>
                 </div>
               </div>
@@ -223,7 +367,10 @@ export default function PropertiesPage() {
                   {[0, 1, 2, 3, 4, 5].map((num) => (
                     <button
                       key={num}
-                      onClick={() => setBedrooms(num)}
+                      onClick={() => {
+                        setBedrooms(num);
+                        setCurrentPage(1);
+                      }}
                       className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                         bedrooms === num
                           ? 'bg-amber-500 text-white'
@@ -238,6 +385,61 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
+              {/* Bathrooms */}
+              <div>
+                <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-200" : "text-gray-900"
+                }`}>
+                  Bathrooms
+                </label>
+                <div className="flex gap-2">
+                  {[0, 1, 2, 3, 4].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => {
+                        setBathrooms(num);
+                        setCurrentPage(1);
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        bathrooms === num
+                          ? 'bg-amber-500 text-white'
+                          : isDarkMode
+                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {num === 0 ? 'Any' : `${num}+`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* City */}
+              <div>
+                <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-200" : "text-gray-900"
+                }`}>
+                  City
+                </label>
+                <select
+                  value={city}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all duration-500 ${
+                    isDarkMode 
+                      ? "bg-gray-700 border-gray-600 text-gray-200" 
+                      : "bg-gray-100 border-gray-300 text-gray-700"
+                  }`}
+                >
+                  <option value="">All Cities</option>
+                  {cities.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Sort By */}
               <div>
                 <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
@@ -247,17 +449,20 @@ export default function PropertiesPage() {
                 </label>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all duration-500 ${
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all duration-500 ${
                     isDarkMode 
-                      ? "bg-gray-700 text-gray-200" 
-                      : "bg-gray-100 text-gray-700"
+                      ? "bg-gray-700 border-gray-600 text-gray-200" 
+                      : "bg-gray-100 border-gray-300 text-gray-700"
                   }`}
                 >
-                  <option value="latest">Latest First</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="popular">Most Popular</option>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
                 </select>
               </div>
 
@@ -297,6 +502,21 @@ export default function PropertiesPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Reset Filters */}
+              <div className="flex items-end">
+                <button
+                  onClick={resetFilters}
+                  className={`w-full py-2.5 rounded-lg border transition-all duration-300 flex items-center justify-center gap-2 ${
+                    isDarkMode 
+                      ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400" 
+                      : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
+                  }`}
+                >
+                  <XIcon size={18} />
+                  Reset Filters
+                </button>
+              </div>
             </div>
 
             {/* Stats */}
@@ -307,7 +527,7 @@ export default function PropertiesPage() {
                 <div className={`text-2xl font-bold transition-colors duration-500 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}>
-                  {properties.length}
+                  {totalItems}
                 </div>
                 <div className={`text-sm transition-colors duration-500 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -319,7 +539,7 @@ export default function PropertiesPage() {
                 <div className={`text-2xl font-bold transition-colors duration-500 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}>
-                  ${Math.min(...properties.map(p => p.price)).toLocaleString()}
+                  ${globalMinPrice.toLocaleString()}
                 </div>
                 <div className={`text-sm transition-colors duration-500 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -343,12 +563,12 @@ export default function PropertiesPage() {
                 <div className={`text-2xl font-bold transition-colors duration-500 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}>
-                  {Math.round(properties.reduce((acc, p) => acc + p.rating, 0) / properties.length)}%
+                  98%
                 </div>
                 <div className={`text-sm transition-colors duration-500 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}>
-                  Avg. Satisfaction
+                  Client Satisfaction
                 </div>
               </div>
             </div>
@@ -368,22 +588,22 @@ export default function PropertiesPage() {
             <p className={`mt-1 transition-colors duration-500 ${
               isDarkMode ? "text-gray-400" : "text-gray-600"
             }`}>
-              Found {filteredProperties.length} properties
+              Found {properties.length} properties
             </p>
           </div>
           
           {/* Category pills */}
           <div className="flex flex-wrap gap-2">
             {filterOptions.map((option) => {
-              const isActive = activeFilter === option;
-              const count = option === "All" 
-                ? properties.length 
-                : properties.filter(p => p.category === option).length;
+              const isActive = activeCategory === option.id;
               
               return (
                 <button
-                  key={option}
-                  onClick={() => setActiveFilter(option)}
+                  key={option.id}
+                  onClick={() => {
+                    setActiveCategory(option.id);
+                    setCurrentPage(1);
+                  }}
                   className={`group flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 ${
                     isActive
                       ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent shadow-lg"
@@ -392,7 +612,7 @@ export default function PropertiesPage() {
                         : "bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50"
                   }`}
                 >
-                  <span className="font-medium text-sm">{option}</span>
+                  <span className="font-medium text-sm">{option.name}</span>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full transition-all duration-300 ${
                     isActive 
                       ? 'bg-white/20' 
@@ -400,7 +620,7 @@ export default function PropertiesPage() {
                         ? 'bg-gray-700 group-hover:bg-amber-900/30'
                         : 'bg-gray-100 group-hover:bg-amber-100'
                   }`}>
-                    {count}
+                    {option.count}
                   </span>
                 </button>
               );
@@ -411,16 +631,80 @@ export default function PropertiesPage() {
 
       {/* Properties Grid/List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        {filteredProperties.length > 0 ? (
-          <div className={`${
-            viewMode === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8'
-              : 'space-y-8'
-          }`}>
-            {filteredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} viewMode={viewMode} isDarkMode={isDarkMode} />
-            ))}
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent"></div>
           </div>
+        ) : properties.length > 0 ? (
+          <>
+            <div className={`${
+              viewMode === 'grid' 
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8'
+                : 'space-y-8'
+            }`}>
+              {properties.map((property) => (
+                <PropertyCard key={property.id} property={property} viewMode={viewMode} isDarkMode={isDarkMode} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDarkMode 
+                      ? "border-gray-700 text-gray-300 hover:bg-gray-700" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Previous
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 2 && page <= currentPage + 2)
+                  )
+                  .map((page, index, array) => {
+                    if (index > 0 && array[index - 1] !== page - 1) {
+                      return (
+                        <span key={`ellipsis-${page}`} className="px-2 text-gray-500">...</span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`w-10 h-10 rounded-lg transition-all duration-300 ${
+                          page === currentPage
+                            ? 'bg-amber-500 text-white'
+                            : isDarkMode
+                              ? 'text-gray-400 hover:bg-gray-700'
+                              : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDarkMode 
+                      ? "border-gray-700 text-gray-300 hover:bg-gray-700" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           // Empty State
           <div className="text-center py-20">
@@ -443,30 +727,12 @@ export default function PropertiesPage() {
                 We couldn't find any properties matching your criteria. Try adjusting your filters or search terms.
               </p>
               <button
-                onClick={() => {
-                  setActiveFilter("All");
-                  setSearchQuery("");
-                  setPriceRange([0, 10000000]);
-                  setBedrooms(0);
-                }}
+                onClick={resetFilters}
                 className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-8 py-3 rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
               >
                 Reset All Filters
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Load More / Pagination */}
-        {filteredProperties.length > 0 && (
-          <div className="mt-12 text-center">
-            <button className={`border-2 font-semibold px-8 py-3 rounded-xl transition-all duration-300 ${
-              isDarkMode 
-                ? "border-gray-700 text-gray-300 hover:border-amber-400 hover:text-amber-400" 
-                : "border-gray-300 text-gray-700 hover:border-amber-400 hover:text-amber-600"
-            }`}>
-              Load More Properties
-            </button>
           </div>
         )}
       </div>
