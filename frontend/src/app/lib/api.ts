@@ -36,14 +36,6 @@ export async function apiRequest<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
-  console.log(`🌐 API Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
-  console.log('Headers:', headers);
-  if (isFormData) {
-    console.log('Body: FormData with fields:', [...(options.body as FormData).keys()]);
-  } else if (options.body) {
-    console.log('Body:', options.body);
-  }
-
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
@@ -52,7 +44,6 @@ export async function apiRequest<T = any>(
     });
 
     const data = await response.json();
-    console.log('📦 API Response:', { status: response.status, data });
 
     if (!response.ok) {
       // Handle 401 Unauthorized specially
