@@ -12,6 +12,8 @@ use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Home\HomeCategoryController;
 use App\Http\Controllers\Home\HomePropertyController;
 use App\Http\Controllers\Admin\PropertyController;
+use App\Http\Controllers\Admin\AboutUsController;
+use App\Http\Controllers\Home\HomeAboutController;
 
 // Admin Auth Routes
 Route::prefix('admin')->group(function () {
@@ -67,10 +69,17 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::patch('/properties/{property}/status', [PropertyController::class, 'updateStatus']);
         Route::post('/properties/{property}/remove-image', [PropertyController::class, 'removeImage']);
         Route::apiResource('properties', PropertyController::class);
+
+
+        // About Us routes
+        Route::get('/about', [AboutUsController::class, 'index']);
+        Route::post('/about', [AboutUsController::class, 'store']);
+        Route::get('/about/history', [AboutUsController::class, 'history']);
+        Route::get('/about/stats', [AboutUsController::class, 'getStats']);
+        Route::get('/about/{id}', [AboutUsController::class, 'show']);
     });
 });
 
-// Public routes (no auth required)
 // Public routes (no auth required)
 Route::prefix('public')->group(function () {
     Route::get('/categories', [HomeCategoryController::class, 'index']);
@@ -84,4 +93,6 @@ Route::prefix('public')->group(function () {
     Route::get('/properties/price-range', [HomePropertyController::class, 'priceRange']);
     Route::get('/properties/{slug}', [HomePropertyController::class, 'show']);
     Route::get('/properties/{property}/similar', [HomePropertyController::class, 'similar']);
+
+    Route::get('/about', [HomeAboutController::class, 'index']);
 });

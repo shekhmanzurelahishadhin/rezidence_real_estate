@@ -2,47 +2,62 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { XIcon, PlusIcon, TrashIcon } from "@/assets/icons";
+import { XIcon, PlusIcon, TrashIcon, SaveIcon, LoaderIcon } from "@/assets/icons";
 
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  aboutData: any;
+  aboutData: any; // This can be null for new entries
   isDarkMode: boolean;
   onSubmit: (data: any) => void;
+  isSaving?: boolean;
 }
+
+// Default empty data structure
+const defaultFormData = {
+  hero: {
+    title: "",
+    subtitle: "",
+  },
+  story: {
+    title: "",
+    content: [] as string[],
+  },
+  mission: "",
+  vision: "",
+  values: [] as { title: string; description: string }[],
+  stats: [] as { value: string; label: string }[],
+};
 
 export default function AboutModal({
   isOpen,
   onClose,
   aboutData,
   isDarkMode,
-  onSubmit
+  onSubmit,
+  isSaving = false
 }: AboutModalProps) {
-  const [formData, setFormData] = useState({
-    hero: {
-      title: "",
-      subtitle: "",
-    },
-    story: {
-      title: "",
-      content: [] as string[],
-    },
-    mission: "",
-    vision: "",
-    values: [] as { title: string; description: string }[],
-    stats: [] as { value: string; label: string }[],
-  });
-
+  const [formData, setFormData] = useState(defaultFormData);
   const [newStoryParagraph, setNewStoryParagraph] = useState("");
   const [newValue, setNewValue] = useState({ title: "", description: "" });
   const [newStat, setNewStat] = useState({ value: "", label: "" });
 
+  // Reset form when modal opens or aboutData changes
   useEffect(() => {
-    if (aboutData) {
-      setFormData(aboutData);
+    if (isOpen) {
+      if (aboutData) {
+        // If editing existing data
+        setFormData(aboutData);
+      } else {
+        // If creating new, use default empty data
+        setFormData(defaultFormData);
+      }
+      // Reset input fields
+      setNewStoryParagraph("");
+      setNewValue({ title: "", description: "" });
+      setNewStat({ value: "", label: "" });
     }
-  }, [aboutData]);
+  }, [isOpen, aboutData]);
 
   if (!isOpen) return null;
 
@@ -130,19 +145,22 @@ export default function AboutModal({
                 <h2 className={`text-xl font-bold transition-colors duration-500 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}>
-                  Edit About Us
+                  {aboutData ? 'Edit About Us' : 'Create About Us'}
                 </h2>
                 <p className={`mt-1 text-sm transition-colors duration-500 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}>
-                  Update your company information and story
+                  {aboutData 
+                    ? 'Update your company information and story'
+                    : 'Create your company information and story'}
                 </p>
               </div>
               <button
                 onClick={onClose}
+                disabled={isSaving}
                 className={`p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-300 ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <XIcon size={20} />
               </button>
@@ -172,11 +190,12 @@ export default function AboutModal({
                         ...prev,
                         hero: { ...prev.hero, title: e.target.value }
                       }))}
+                      disabled={isSaving}
                       className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                         isDarkMode
                           ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                      }`}
+                      } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="Building Dreams, Creating Legacies"
                     />
                   </div>
@@ -194,11 +213,12 @@ export default function AboutModal({
                         ...prev,
                         hero: { ...prev.hero, subtitle: e.target.value }
                       }))}
+                      disabled={isSaving}
                       className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                         isDarkMode
                           ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                      }`}
+                      } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="For over 15 years, LuxeProperties has been the trusted name..."
                     />
                   </div>
@@ -226,11 +246,12 @@ export default function AboutModal({
                       ...prev,
                       story: { ...prev.story, title: e.target.value }
                     }))}
+                    disabled={isSaving}
                     className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     placeholder="Our Journey in Real Estate"
                   />
                 </div>
@@ -246,17 +267,19 @@ export default function AboutModal({
                       value={newStoryParagraph}
                       onChange={(e) => setNewStoryParagraph(e.target.value)}
                       rows={2}
+                      disabled={isSaving}
                       className={`flex-1 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                         isDarkMode
                           ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                      }`}
+                      } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="Add a paragraph to your story..."
                     />
                     <button
                       type="button"
                       onClick={addStoryParagraph}
-                      className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300"
+                      disabled={isSaving || !newStoryParagraph.trim()}
+                      className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
                     </button>
@@ -277,12 +300,20 @@ export default function AboutModal({
                         <button
                           type="button"
                           onClick={() => removeStoryParagraph(index)}
-                          className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                          disabled={isSaving}
+                          className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
                         >
                           <TrashIcon size={16} />
                         </button>
                       </div>
                     ))}
+                    {formData.story.content.length === 0 && (
+                      <p className={`text-sm italic ${
+                        isDarkMode ? "text-gray-500" : "text-gray-400"
+                      }`}>
+                        No paragraphs added yet. Add your first paragraph above.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -300,11 +331,12 @@ export default function AboutModal({
                     rows={4}
                     value={formData.mission}
                     onChange={(e) => setFormData(prev => ({ ...prev, mission: e.target.value }))}
+                    disabled={isSaving}
                     className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     placeholder="Our mission statement..."
                   />
                 </div>
@@ -319,11 +351,12 @@ export default function AboutModal({
                     rows={4}
                     value={formData.vision}
                     onChange={(e) => setFormData(prev => ({ ...prev, vision: e.target.value }))}
+                    disabled={isSaving}
                     className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     placeholder="Our vision statement..."
                   />
                 </div>
@@ -342,27 +375,30 @@ export default function AboutModal({
                     value={newValue.title}
                     onChange={(e) => setNewValue(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Value title"
+                    disabled={isSaving}
                     className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                   <input
                     type="text"
                     value={newValue.description}
                     onChange={(e) => setNewValue(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Value description"
+                    disabled={isSaving}
                     className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                   <button
                     type="button"
                     onClick={addValue}
-                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 flex items-center justify-center gap-2"
+                    disabled={isSaving || !newValue.title || !newValue.description}
+                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon size={16} />
                     Add Value
@@ -391,12 +427,20 @@ export default function AboutModal({
                       <button
                         type="button"
                         onClick={() => removeValue(index)}
-                        className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                        disabled={isSaving}
+                        className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
                       >
                         <TrashIcon size={16} />
                       </button>
                     </div>
                   ))}
+                  {formData.values.length === 0 && (
+                    <p className={`col-span-2 text-sm italic ${
+                      isDarkMode ? "text-gray-500" : "text-gray-400"
+                    }`}>
+                      No values added yet. Add your first value above.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -413,27 +457,30 @@ export default function AboutModal({
                     value={newStat.value}
                     onChange={(e) => setNewStat(prev => ({ ...prev, value: e.target.value }))}
                     placeholder="Value (e.g., 15+)"
+                    disabled={isSaving}
                     className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                   <input
                     type="text"
                     value={newStat.label}
                     onChange={(e) => setNewStat(prev => ({ ...prev, label: e.target.value }))}
                     placeholder="Label (e.g., Years Experience)"
+                    disabled={isSaving}
                     className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-amber-500 outline-none ${
                       isDarkMode
                         ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                   <button
                     type="button"
                     onClick={addStat}
-                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 flex items-center justify-center gap-2"
+                    disabled={isSaving || !newStat.value || !newStat.label}
+                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <PlusIcon size={16} />
                     Add Stat
@@ -450,7 +497,8 @@ export default function AboutModal({
                       <button
                         type="button"
                         onClick={() => removeStat(index)}
-                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        disabled={isSaving}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       >
                         <XIcon size={12} />
                       </button>
@@ -466,6 +514,13 @@ export default function AboutModal({
                       </div>
                     </div>
                   ))}
+                  {formData.stats.length === 0 && (
+                    <p className={`col-span-4 text-sm italic text-center ${
+                      isDarkMode ? "text-gray-500" : "text-gray-400"
+                    }`}>
+                      No statistics added yet. Add your first statistic above.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -474,19 +529,31 @@ export default function AboutModal({
                 <button
                   type="button"
                   onClick={onClose}
+                  disabled={isSaving}
                   className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-300 ${
                     isDarkMode
                       ? "text-gray-300 hover:text-white hover:bg-gray-700"
                       : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
+                  } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-all duration-300"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {isSaving ? (
+                    <>
+                      <LoaderIcon size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <SaveIcon size={16} />
+                      {aboutData ? 'Save Changes' : 'Create About Section'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
