@@ -1,3 +1,4 @@
+// app/about/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,10 +21,13 @@ import {
   TargetIcon,
   GlobeIcon,
   CheckCircleIcon,
+  LoaderIcon,
+  AlertCircleIcon
 } from "@/assets/icons";
 import { useTheme } from "@/app/ThemeProvider";
+import { AboutService, AboutData } from "@/app/(backend)/services/api/about.service";
 
-// Unsplash images
+// Unsplash images (fallback images if API data doesn't include images)
 const IMAGES = {
   team: "https://images.unsplash.com/photo-1571624436279-b272aff752b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80",
   office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80",
@@ -35,14 +39,15 @@ const IMAGES = {
   agent3: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80",
 };
 
-const stats = [
+// Default data in case API fails
+const defaultStats = [
   { value: "15+", label: "Years Experience", icon: <AwardIcon size={24} className="text-amber-500" /> },
   { value: "500+", label: "Properties Sold", icon: <HomeIcon size={24} className="text-amber-500" /> },
   { value: "98%", label: "Client Satisfaction", icon: <StarIcon size={24} className="text-amber-500" /> },
   { value: "$2.5B+", label: "Total Value Sold", icon: <TrendingUpIcon size={24} className="text-amber-500" /> },
 ];
 
-const values = [
+const defaultValues = [
   {
     title: "Integrity First",
     description: "We believe in complete transparency and honesty in all our dealings.",
@@ -73,7 +78,7 @@ const values = [
   },
 ];
 
-const teamMembers = [
+const defaultTeamMembers = [
   {
     name: "Michael Rodriguez",
     role: "Founder & CEO",
@@ -115,14 +120,84 @@ const timeline = [
 export default function AboutPage() {
   const { isDarkMode } = useTheme();
   const [visible, setVisible] = useState(false);
+  const [aboutData, setAboutData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    fetchAboutData();
+  }, []);
+
+  const fetchAboutData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await AboutService.getPublicData();
+      setAboutData(data);
+    } catch (err) {
+      console.error('Error fetching about data:', err);
+      setError('Failed to load about us data. Using default content.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Use API data if available, otherwise use defaults
+  const stats = aboutData?.stats?.map(stat => ({
+    ...stat,
+    icon: getIconForStat(stat.label)
+  })) || defaultStats;
+
+  const values = aboutData?.values?.map((value, index) => ({
+    ...value,
+    icon: getIconForValue(index),
+    lightColor: getLightColorForValue(index),
+    darkColor: getDarkColorForValue(index)
+  })) || defaultValues;
+
+  const storyContent = aboutData?.story?.content || [
+    "Founded in 2010 by Michael Rodriguez, LuxeProperties began as a boutique agency with a vision to transform the luxury real estate experience. What started as a single office in Beverly Hills has grown into a globally recognized brand.",
+    "Our success is built on a foundation of trust, expertise, and an unwavering commitment to our clients' success. We've consistently delivered exceptional results by combining traditional values with innovative approaches."
+  ];
+
+  const storyTitle = aboutData?.story?.title || "Redefining Luxury Real Estate";
+  const heroTitle = aboutData?.hero?.title || "Building Dreams, Creating Legacies";
+  const heroSubtitle = aboutData?.hero?.subtitle || "For over 15 years, LuxeProperties has been the trusted name in luxury real estate. We don't just sell properties; we craft exceptional living experiences and build lasting relationships.";
+  const mission = aboutData?.mission || "To provide exceptional real estate services that exceed client expectations through integrity, innovation, and personalized attention.";
+  const vision = aboutData?.vision || "To be the most trusted and innovative real estate company, setting new standards for excellence in every market we serve.";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <LoaderIcon size={48} className="animate-spin text-amber-500 mx-auto mb-4" />
+          <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+            Loading about us information...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden">
+      {/* Error Banner */}
+      {error && (
+        <div className={`fixed top-20 left-0 right-0 z-50 mx-auto max-w-7xl px-4`}>
+          <div className={`rounded-lg p-4 flex items-center gap-3 ${
+            isDarkMode ? "bg-yellow-900/50 text-yellow-300" : "bg-yellow-50 text-yellow-700"
+          }`}>
+            <AlertCircleIcon size={20} />
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="relative min-h-[70vh] overflow-hidden transition-all duration-500"
         style={{
@@ -171,7 +246,7 @@ export default function AboutPage() {
             </div>
 
             <h1 className="text-white text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6">
-              Building Dreams,{" "}
+              {heroTitle.split('Creating Legacies')[0]}
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
                 Creating Legacies
               </span>
@@ -180,8 +255,7 @@ export default function AboutPage() {
             <p className={`text-xl leading-relaxed max-w-3xl mb-8 transition-colors duration-500 ${
               isDarkMode ? "text-gray-300" : "text-gray-300"
             }`}>
-              For over 15 years, LuxeProperties has been the trusted name in luxury real estate. 
-              We don't just sell properties; we craft exceptional living experiences and build lasting relationships.
+              {heroSubtitle}
             </p>
 
             {/* Stats */}
@@ -239,22 +313,15 @@ export default function AboutPage() {
               <h2 className={`text-4xl lg:text-5xl font-bold mb-6 transition-colors duration-500 ${
                 isDarkMode ? "text-white" : "text-gray-900"
               }`}>
-                Redefining Luxury <span className="text-amber-500">Real Estate</span>
+                {storyTitle}
               </h2>
-              <p className={`text-lg mb-6 transition-colors duration-500 ${
-                isDarkMode ? "text-gray-300" : "text-gray-600"
-              }`}>
-                Founded in 2010 by Michael Rodriguez, LuxeProperties began as a boutique agency 
-                with a vision to transform the luxury real estate experience. What started as a 
-                single office in Beverly Hills has grown into a globally recognized brand.
-              </p>
-              <p className={`text-lg mb-8 transition-colors duration-500 ${
-                isDarkMode ? "text-gray-300" : "text-gray-600"
-              }`}>
-                Our success is built on a foundation of trust, expertise, and an unwavering 
-                commitment to our clients' success. We've consistently delivered exceptional 
-                results by combining traditional values with innovative approaches.
-              </p>
+              {storyContent.map((paragraph, index) => (
+                <p key={index} className={`text-lg mb-6 transition-colors duration-500 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-600"
+                }`}>
+                  {paragraph}
+                </p>
+              ))}
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
@@ -329,6 +396,59 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Mission & Vision Section */}
+      <section className={`py-20 transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gray-800" 
+          : "bg-gray-50"
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Mission */}
+            <div className={`p-8 rounded-2xl ${
+              isDarkMode 
+                ? "bg-gray-700 border border-gray-600" 
+                : "bg-white shadow-lg"
+            }`}>
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-6">
+                <TargetIcon size={32} className="text-amber-600" />
+              </div>
+              <h3 className={`text-2xl font-bold mb-4 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
+                Our Mission
+              </h3>
+              <p className={`text-lg ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}>
+                {mission}
+              </p>
+            </div>
+
+            {/* Vision */}
+            <div className={`p-8 rounded-2xl ${
+              isDarkMode 
+                ? "bg-gray-700 border border-gray-600" 
+                : "bg-white shadow-lg"
+            }`}>
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-6">
+                <GlobeIcon size={32} className="text-amber-600" />
+              </div>
+              <h3 className={`text-2xl font-bold mb-4 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}>
+                Our Vision
+              </h3>
+              <p className={`text-lg ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}>
+                {vision}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Our Values */}
       <section className={`py-20 transition-all duration-500 ${
         isDarkMode 
@@ -396,6 +516,75 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Timeline Section */}
+      <section className={`py-20 transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-gray-800" 
+          : "bg-white"
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className={`inline-flex items-center gap-2 text-sm font-semibold tracking-widest uppercase mb-4 transition-colors duration-500 ${
+              isDarkMode ? "text-amber-400" : "text-amber-600"
+            }`}>
+              <span className={`w-8 h-0.5 transition-colors duration-500 ${
+                isDarkMode ? "bg-amber-400" : "bg-amber-400"
+              }`} />
+              OUR JOURNEY
+            </span>
+            <h2 className={`text-4xl lg:text-5xl font-bold mb-6 transition-colors duration-500 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}>
+              Milestones That <span className="text-amber-500">Define Us</span>
+            </h2>
+          </div>
+
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className={`absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full ${
+              isDarkMode ? "bg-gray-700" : "bg-gray-200"
+            }`} />
+
+            <div className="space-y-12">
+              {timeline.map((item, index) => (
+                <div
+                  key={item.year}
+                  className={`relative flex items-center ${
+                    index % 2 === 0 ? "flex-row" : "flex-row-reverse"
+                  }`}
+                >
+                  {/* Content */}
+                  <div className={`w-5/12 ${
+                    index % 2 === 0 ? "text-right pr-8" : "text-left pl-8"
+                  }`}>
+                    <div className={`inline-block p-6 rounded-2xl ${
+                      isDarkMode 
+                        ? "bg-gray-700 border border-gray-600" 
+                        : "bg-gray-50 shadow-lg"
+                    }`}>
+                      <span className="text-amber-500 font-bold text-xl mb-2 block">
+                        {item.year}
+                      </span>
+                      <h3 className={`text-xl font-bold mb-2 ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}>
+                        {item.title}
+                      </h3>
+                      <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Center Dot */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full bg-amber-500" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Team */}
       <section className={`py-20 transition-all duration-500 ${
         isDarkMode 
@@ -425,7 +614,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member) => (
+            {defaultTeamMembers.map((member) => (
               <div
                 key={member.name}
                 className={`rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group ${
@@ -610,4 +799,43 @@ export default function AboutPage() {
       </section>
     </div>
   );
+}
+
+// Helper functions
+function getIconForStat(label: string) {
+  if (label.includes('Experience')) return <AwardIcon size={24} className="text-amber-500" />;
+  if (label.includes('Sold')) return <HomeIcon size={24} className="text-amber-500" />;
+  if (label.includes('Satisfaction')) return <StarIcon size={24} className="text-amber-500" />;
+  if (label.includes('Value')) return <TrendingUpIcon size={24} className="text-amber-500" />;
+  return <AwardIcon size={24} className="text-amber-500" />;
+}
+
+function getIconForValue(index: number) {
+  const icons = [
+    <ShieldCheckIcon key="shield" size={28} className="text-amber-500" />,
+    <HeartIcon key="heart" size={28} className="text-amber-500" />,
+    <TargetIcon key="target" size={28} className="text-amber-500" />,
+    <GlobeIcon key="globe" size={28} className="text-amber-500" />
+  ];
+  return icons[index % icons.length];
+}
+
+function getLightColorForValue(index: number) {
+  const colors = [
+    "from-amber-50 to-orange-50",
+    "from-blue-50 to-cyan-50",
+    "from-green-50 to-emerald-50",
+    "from-purple-50 to-violet-50"
+  ];
+  return colors[index % colors.length];
+}
+
+function getDarkColorForValue(index: number) {
+  const colors = [
+    "from-amber-900/20 to-orange-900/20",
+    "from-blue-900/20 to-cyan-900/20",
+    "from-green-900/20 to-emerald-900/20",
+    "from-purple-900/20 to-violet-900/20"
+  ];
+  return colors[index % colors.length];
 }
